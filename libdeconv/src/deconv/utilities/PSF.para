@@ -1,0 +1,19 @@
+0      >> mode           
+0.4    >> NA - the objective numerical aperture.
+0.51   >> WL - the fluoresecnce emission light wavelength in microns.
+1.0    >> RI - the refractive index of the immersion medium used for the objective.
+1.0    >> RI2 - the refractive index of the immersion medium required by the objective.
+9000   >> WD  - the objective working distance in microns.
+1.522  >> RIC  - the refractive index of the used cover slip/glass.
+1.522  >> RIC2 - refractive index of the required cover slip/glass.
+170    >> THC  - the thickness (microns) of the used cover slip/glass.
+170    >> THC2 - the thickness (microns) of the required cover slip/glass.
+=========== argument lines end and don't add or delete lines above this line ==========
+mode = 0 : essential settings,        read 1~4 argument lines.
+       1 : immersion medium mismatch, read 1~6 argument lines.
+       2 : cover slip/glass mismatch, read 1~4 and 7~10 argrment lines.
+       3 : all settings,              read 1~10 argument lines.
+Tip: only edit the arguments in the argument lines.
+     The refrective index of the immersion medium in the fourth argument line is 1.0 
+     for such a situation that no immersion medium is used, for instance, when you use 
+     a dry objective lens which does not require the immersion medium.

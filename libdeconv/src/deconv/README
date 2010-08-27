@@ -1,0 +1,94 @@
+About:
+
+	This is the README for the LSDCAS software package. In it are some basic instructions
+	for installing the deconv library and software, released under the terms of GPL.
+    	A copy of the license accompanies this software in the file COPYING.
+
+Requirements Checklist:
+
+	A working installation of a semi-recent Linux distro.  This guide was written using
+	a fresh installation of Ubuntu Lucid Lynx 10.04 which is the latest stable release.
+
+INSTALLATION
+
+NOTE: If you follow along with the Ubuntu Lucid Lynx installation instructions, you'll have to make sure
+that the universe sources are uncommented in /etc/apt/sources.list
+
+==========================
+1. Setup build environment
+==========================
+
+For those not using Ubuntu, you need at minimal, gcc/g++, scons, and subversion to get the software.
+Building your own compiler is outside the scope of this document.  scons and subversion are the only two
+nonstandard packages, although subversion is becoming much more standard, and scons is readily availible
+from most package repositories.
+
+$ sudo apt-get install build-essential manpages-dev automake1.9 scons subversion
+
+===========================
+2. Get some extra libraries
+===========================
+
+Extra libraries needed:
+
+	boost headers		- Boost Library
+	libfftw3 libfftw3f	- FFTW3 Library
+	libgslcblas libgsl	- Gnu Science Library
+	libglut libGL libGLU	- GL Library, only if you plan on installing viewers
+
+$ sudo apt-get libboost-dev 
+$ sudo apt-get fftw3 fftw3-dev fftw3-doc 
+$ sudo apt-get libgsl0 libgsl0-dbg libgsl0-dev gsl-bin gsl-doc-pdf gsl-ref-html gsl-ref-psdoc 
+$ sudo apt-get freeglut3 freeglut3-dbg freeglut3-dev libglut3 libglut3-dev libglew1
+$ sudo apt-get libglu1-mesa libglu1-mesa-dev libgl1-mesa libgl1-mesa-dev libgl1-mesa-dri
+
+==================
+3. Building deconv
+==================
+
+Get sources from the repository:
+
+$ svn co http://svn.lsdcas.engineering.uiowa.edu/repos/lsdcas/trunk/deconv
+$ cd deconv
+ 
+$ scons
+$ sudo scons install
+
+==========================
+4. Update ld configuration
+==========================
+
+Chances are, if you got too excited and tried running one of the programs,
+you recieved an error about not being able to find the shared libraries.  
+This is because ld (dynamic linker) doesn't know where to locate 'libdeconv'.
+
+There are two easy fixes for this.
+
+The first, is to set the following environment variable in your ~/.bash_profile
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib (if you install 'deconv' in the default mode)
+or
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:the_path_of_libdeconv (if you install 'deconv' using 'Local=1' )
+
+To make this configuration system wide you can do the following:
+
+$ sudo vi /etc/ld.so.conf
+
+This may or may not be an empty file.  The format is a single directory entry per line.
+
+Regardless, just add a line to the end of the file:
+
+'/usr/local/lib'
+
+Now all you need is one last command to inform ld of its new configuration
+
+$ sudo ldconfig
+
+Now you should be able to enjoy using the LSDCAS Software.
+
+=======
+Contact
+=======
+
+If you have questions, comments, concerns, rants, or raves, 
+shoot me an email at: michael-mackey@uiowa.edu

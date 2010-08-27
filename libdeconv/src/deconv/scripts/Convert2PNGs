@@ -1,0 +1,12 @@
+#! /bin/bash
+
+ECHO=/bin/echo
+GREP=/bin/grep
+CONVERT=convert
+
+for file in $@
+do
+        PNG=`$ECHO $file | $GREP -o ".*\."`png
+        $CONVERT $file $PNG
+done
+

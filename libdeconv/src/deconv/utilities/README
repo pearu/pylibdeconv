@@ -1,0 +1,248 @@
+==================================================================
+This README is an instruction for using programs in this directory
+==================================================================
+
+Author: Yuansheng Sun (yunasheng-sun@uiowa.edu)
+Copyright: Univeristy of Iowa 2006
+
+
+Programs list:
+	deconv3Dpsf.cc
+	deconvRZpsf.cc
+	deconvRZpsf_3Dpsf.cc
+	deconvLW.cc
+	deconvCG.cc
+	deconvEM.cc
+
+Output binaries:
+	deconv3Dpsf
+	deconvRZpsf
+	deconvRZpsf_3Dpsf
+	deconvLW
+	deconvCG
+	deconvEM
+
+"deconv3Dpsf"       is designed for generating a 3-D PSF. 
+"deconvRZpsf"       is designed for generating a 2-D RZ PSF table.
+"deconvRZpsf_3Dpsf" is designed for generating a 3-D PSF for deconvolution.
+"deconvLW"          is designed for performing a 3-D deconvolution process.
+"deconvCG"          is designed for performing a 3-D deconvolution process.
+"deconvEM"          is designed for performing a 3-D deconvolution process.
+
+
+==========================================================
+1. Cubic Data Set Input and Output using the "CCube" class  
+==========================================================
+
+The input or output of a 3-D data set is handled using the "CCube" class and 
+you can read more on it from the comments in "CCube.h" or the "UserManual".
+
+A cubic data set is simply saved in two files : a header file and a data file.
+The header file and the data file must have a same name except the suffix, and for example:
+
+	MyCube.hdr (CCube header file) and MyCube.u8 (CCube data file) are a pair of CCube files 
+	storing a cubic data set whose data type is 8-bit unsigned char.    
+
+	MyCube.hdr (CCube header file) and MyCube.i16 (CCube data file) are a pair of CCube files 
+	storing a cubic data set whose data type is 16-bit unsigned int.    
+
+	MyCube.hdr (CCube header file) and MyCube.f32 (CCube data file) are a pair of CCube files 
+	storing a cubic data set whose data type is 32-bit float.    
+
+	MyCube.hdr (CCube header file) and MyCube.f64 (CCube data file) are a pair of CCube files 
+	storing a cubic data set whose data type is 64-bit double.
+
+Tips : If you cat a CCube header file (.hdr), you will see the dimensions of the data set as follows 
+       <the slowest varying dimension>
+       <the middle          dimension>
+       <the fastest varying dimension>
+ 
+You can package your 2-D images to CCube files using ViewSlices (read how to use ViewSlices in "viewer/README").
+You can output 2-D images from CCube files using ViewCube (read how to use ViewCube in "viewer/README"). 
+
+
+==============            
+2. deconv3Dpsf
+==============
+
+*****
+usage
+*****
+	$deconv3Dpsf <psf> <PSF.para> <DimensionX> <DimensionY> <DimensionZ> <CalibrationX> <CalibrationY> <SectioningZ>
+	For example : $deconv3Dpsf MyPsf PSF.para 128 128 128 0.67 0.59 1.0
+
+	<PSF.para> is a text file holding PSF physical parameters which you can set up by editting the file.
+
+	<DimensionX> is the fastest varying dimension of a 3-D PSF.
+	<DimensionY> is the middle          dimension of a 3-D PSF.
+	<DimensionZ> is the slowest varying dimension of a 3-D PSF.
+	
+	<CalibrationX> is the corresponding length (microns) in the object space to
+	               the sectioning image pixel width (the fast varying dimension of the image).
+	<CalibrationY> is the corresponding length (microns) in the object space to 
+	               the sectioning image pixel height (the fast varying dimension of the image). 
+	<SectioningZ>  is the distance (microns) between two successive sectioning images.
+ 
+	Note: If the actual lateral sampling rates of the 3-D PSF: <CalibrationX> and <CalibrationY> 
+	      are lager than the calculated Nyquist sampling rates from 
+	      the objective numerical aperture (NA) and the emission light wavelength (WL), 
+	      a 2-D RZ PSF will be first created and then used to generate the 3-D PSF. 
+	       
+******
+Output
+******
+	The 3-D PSF header file : <psf>.hdr
+	The 3-D PSF data   file : <psf>.f32 if <DataType> is float.
+	                          <psf>.f64 if <DataType> is double.
+	                       
+	The profile of the generated PSF will be saved in a text file : <psf>.log
+	
+	Note: <DataType> is defined as "float" in "deconv3Dpsf.cc" and 
+	      you need to rebuild the program if you change it to "double". 
+
+	 
+==============
+4. deconvRZpsf
+==============            
+
+*****
+Usage
+*****
+	$deconvRZpsf.cc <RZpsf> <PSF.para> <RidialDimension> <Sections> <RadialCalibration> <SectioningConstant> 
+	For example : $deconvRZpsf MyRZpsf PSF.para 20000 2000 0.01 0.5
+
+	<PSF.para> is a text file holding PSF physical parameters which you can set up by editting the file.
+	
+	<RadialDimension> is the fast varying dimension of a 2-D RZ PSF.
+	<Sections>        is the slow varying dimension of a 2-D RZ PSF.
+ 
+	<RadialCalibration>  is the radial sampling rate of a 2-D RZ PSF.
+	<SectioningConstant> is the sectioning rate of a 2-D RZ PSF.
+	
+	Note: read about the 2-D RZ PSF in the "UserManual".
+	
+******
+Output
+******
+	The 2-D RZpsf header file : <RZpsf>.rzh
+	The 2-D RZpsf data   file : <RZpsf>.rzd
+	
+	Note: read about formats of the RZ PSF header and data files in "FluoRZPSF.h" or "UserManual".
+
+
+====================
+5. deconvRZpsf_3Dpsf
+====================
+	
+*****
+Usage
+*****
+	$deconvRZpsf_3Dpsf <RZpsf> <psf> <DimensionX> <DimensionY> <DimensionZ> <CalibrationX> <CalibrationY> <SectioningZ>
+	For example : $deconvRZpsf_3Dpsf MyRZpsf MyPsf 128 128 128 0.67 0.59 1.0
+	
+	<DimensionX> is the fastest varying dimension of a 3-D PSF.
+	<DimensionY> is the middle          dimension of a 3-D PSF.
+	<DimensionZ> is the slowest varying dimension of a 3-D PSF.
+	
+	<CalibrationX> is the corresponding length (microns) in the object space to
+	               the sectioning image pixel width (the fast varying dimension of the image).
+	<CalibrationY> is the corresponding length (microns) in the object space to 
+	               the sectioning image pixel height (the fast varying dimension of the image). 
+	<SectioningZ>  is the distance (microns) between two successive sectioning images.
+
+	The 2-D RZpsf profile will be read from <RZpsf>.rzh
+	The 2-D RZpsf data    will be read from <RZpsf>.rzd
+	
+	Note: read about the header or data file format of a 2-D RZ PSF in "FluoRZPSF.h" or the "UserManual".
+		
+******
+Output
+******
+	The 3-D PSF header file : <psf>.hdr
+	The 3-D PSF data   file : <psf>.f32 if <DataType> is float.
+	                          <psf>.f64 if <DataType> is double.
+	
+	Note: <DataType> is defined as "float" in "deconvRZpsf_3Dpsf.cc" and 
+	      you need to rebuild the program if you change it to "double". 
+
+********
+Warnning
+********
+	Make sure that you use the right 2-D RZ PSF to create a 3-D PSF, which should have 
+	the same physical conditions (PSF.para) under which the 2-D RZ PSF is generated. 
+	You can cat the 2-D RZ PSF header (".rzh") file to see under what physical conditions 
+	the 2-D RZ PSF is generated.
+	
+
+===============================
+6. deconvLW, deconvCG, deconvEM
+===============================
+
+*****
+Usage
+*****
+	program = "deconvLW" or "deconvCG"
+	$program <image> <psf> <first_estimated_object> <deconvolved_object> 
+	         [<max_allowed_deconvolved_iterations>] [<criterion_to_stop_deconvolution>]
+	For example : $program MyImage.u8 MyPsf.f32 MyImage.u8 object
+	            : $program MyImage.u8 MyPsf.f32 MyImage.u8 object 2000
+	            : $program MyImage.u8 MyPsf.f32 MyImage.u8 object 2000 1.0e-8
+	
+	program = "deconvEM"
+	$program <image> <psf> <first_estimated_object> <deconvolved_object>
+	         [<max_allowed_deconvolved_iterations>] [<criterion_to_stop_deconvolution>]
+	         [<EMdeconv_IR_Iterations>] [<EMdeconv_IR_penalty>] 
+	For example : $program MyImage.u8 MyPsf.f32 MyImage.u8 object 
+	            : $program MyImage.u8 MyPsf.f32 MyImage.u8 object 2000 
+	            : $program MyImage.u8 MyPsf.f32 MyImage.u8 object 2000 1.0e-8
+	            : $program MyImage.u8 MyPsf.f32 MyImage.u8 object 2000 1.0e-8 30
+	            : $program MyImage.u8 MyPsf.f32 MyImage.u8 object 2000 1.0e-8 30 0.00005
+		
+	<image>                   is the name of the input image cube data file.
+	<psf>                     is the name of the input psf cube data file.
+	<first_estimated_object>  is the name of the input first estimated object cube data file.
+	<deconvolved_object>      is the name of the deconvolved object cube file without suffix
+
+	[<max_allowed_deconvolved_iterations>] is a dummy argument. If it is given, deconvolution will be stopped  
+	                                       after the given number of iterations in the deconvolution main loop 
+	                                       no matter whether the criterion is reached or not.
+	                                       
+	[<criterion_to_stop_deconvolution>] is a dummy argument. If it is given, deconvolution will be stopped 
+	                                    when the average update over 10 past iterations reaches the criterion.
+	
+	[<EMdeconv_IR_Iterations>] is a dummy argument and to indicate how often the intensity regularization
+	                           is applied in a EM deconvolution process (described in "EMdeconvolver.h").
+	                           Its default is 50. The lower value results in a smoother deconvolved object. 
+	                           
+	[<EMdeconv_IR_penalty>]    is a dummy argument and the penaly value used by the intensity regularization
+	                           in a EM deconvolution process (described in "EMdeconvolver.h").
+	                           Its default is calculated as {max_value_of_input_psf/max_value_of_input_image}
+	                           The higher penalty value results in a smoother deconvolved object.
+
+	Note: read section 1 in this README file about the input and output data format.  
+	      read requirements about the input image, the PSF, and the first_estimated_object 
+	      in "LWdeconvolver.h" or "CGdeconvolver.h" or "EMdeconvolver.h" or the "UserManual" 
+
+	Tips: you can run your program in the background using nohup.
+	
+	      Use <image> for <first_estimated_object> if it is the first time 
+	      you run a deconvolution process on the <image> data set.
+	       
+	      If you have already run a deconvolution process on the <image> data set 
+	      and obtained a deconvolved object such as <previously_deconvolved_object>,
+	      you can use <previously_deconvolved_object> for <first_estimated_object>. 
+	      Then the deconvolution will continue from <previously_deconvolved_object>.
+	
+******
+Output
+******
+	The header file : <deconvolved_object>.hdr
+	The data   file : <deconvolved_object>.f32 if <DataType> is float.
+	                  <deconvolved_object>.f64 if <DataType> is double.
+	
+	The deconvolution profile will be saved in <deconvolved_object>_plan.txt	
+	The update data will be saved in <deconvolved_object>_Update.txt
+
+	Note: <DataType> is defined as "float" in "deconvLW", "deconvCG" and "deconvEM". 
+	      You need to rebuild the program if you change it to "double" and you have
+	      to do so if your image or PSF data is "double" (suffixed as ".f64").
