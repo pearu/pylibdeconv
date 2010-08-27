@@ -1,0 +1,227 @@
+==================================================================
+This README is an instruction for using programs in this directory
+==================================================================
+
+Author: Yuansheng Sun (yuansheng-sun@uiowa.edu)
+Copyright: University of Iowa 2006
+
+
+Programs list:
+	gnuplot_i.h
+	gnuplot_i.cc
+	ViewerUtils.h
+	ViewerUtils.cc
+	ViewCube.cc
+	ViewSlices.cc
+
+Output binaries:
+	ViewCube
+	ViewSlices
+
+
+============================
+1. gnuplot_i.h, gnuplot_i.cc
+============================
+
+It is an open-source program using the GnuPlot library to draw a 2-D plot.
+
+
+================================
+2. ViewerUtils.h, ViewerUtils.cc
+================================
+
+It includes some functions called by "ViewCube.cc" and "ViewSlices.cc".
+
+
+==========================================
+3. Contrast and Brightness in both viewers
+==========================================
+
+Both viewers use the "Window Center" and "Window Width" to describe the brightness and contrast of data. 
+You can find how it works at the DICOM Standard "http://www.sph.sc.edu/comd/rorden/dicom.html#contrast".
+In both viewers, the "Window Center" is termed as "Intensity_Window_Center" and the "Window Width" is 
+termed as "Intensity_Window_Width". Those two varaibles control the contrast and brightness. A displayed 
+intensity (ranging from 0 to 255) on the screen is calculated from the data_intensity as follows: 
+
+displayed_intensity = (int) floor( 0.5 + 255 / Intensity_Window_Width * ( data_intensity -
+                                   Intensity_Window_Center + Intensity_Window_Width/2 ) )
+
+for example : if you want to view your data a linear intensity range from 0 to 255 
+              then set Intensity_Window_Width = 255 and Intensity_Window_Center = 127.5.
+
+
+===========
+4. ViewCube
+===========
+
+"ViewCube" is designed for viewing and handling a cubic data set using the OpenGL package and the GnuPlot 
+and libdeconv libraries. The cubic data set loaded into the viewer from the program argument, which is 
+the original input cubic data set, must be saved in the CCube format (see the description in "CCube.h").
+The cubic data set could be unsigned char, unsigned int, float or double, but canNOT has a negative value.
+ 
+The cubic data is displayed in one or all of three projections (XY/XZ/YZ-projection). Each 
+projection is made using the OpenGL texture mapping functions from a 2-D slice in the cube. 
+A 2-D Slice is indexed along the X, Y or Z-dimension, which is the cube's first, second or 
+third dimension. Use the keyboard keys "q, a, w, s, e, d" to control the index number of 
+a 2-D slice along the X, Y or Z-dimension (see defination in Menu->help). 
+
+Please be awared that this cubic data set may be changed after performing some processes on it in the viewer.
+
+*****
+usage
+*****
+	$ViewCube <cube_data_file_name>
+	For example: 
+		$ViewCube MyImage.u8
+		$ViewCube MyImage.i16
+		$ViewCube MyPsf.f32
+		$ViewCube MyPsf.f64
+
+****
+Menu
+****
+	----
+	File
+	----
+	ReLoad>Cube    : reload the original input cubic data set into the viewer
+	SaveTo>NewCube : save the cubic data set into CCube files
+	SaveTo>Slices  : save the cubic data set into pgm files
+		
+	----
+	View
+	----
+	View>XY : only view the XY-projection of the cubic data set along the Z-axis
+	View>XZ : only view the XZ-projection of the cubic data set along the Y-axis
+	View>YZ : only view the YZ-projection of the cubic data set along the X-axis
+	View>XYZ: view all the three projections of the cubic data set
+
+	----
+	Plot
+	----
+	ByteHistogram    : plot slice(ViewXY/ViewXZ/ViewYZ) or cubic(ViewXYZ) histogram binding data within 0~255
+	ShortHistogram   : plot slice(ViewXY/ViewXZ/ViewYZ) or cubic(ViewXYZ) histogram binding data within 0~65535
+	PlaneFocusCurve  : plot focus values of slices along the X-axis(ViewYZ) or Y-axis(ViewXZ) or Z-axis(ViewXY/ViewXYZ)
+	PlaneMeanCurve   : plot mean values of slices along the X-axis(ViewYZ) or Y-axis(ViewXZ) or Z-axis(ViewXY/ViewXYZ)
+	PlaneMaxCurve    : plot max values of slices along the X-axis(ViewYZ) or Y-axis(ViewXZ) or Z-axis(ViewXY/ViewXYZ)
+	PlotRefresh>On   : Old plots in the GnuPlot window will be deleted when you add a new plot to the window
+	PlotRefresh>Off  : Old plots in the GnuPlot window will be still kept when you add a new plot to the window
+	WriteTextFile>On : The plotted data will be written into a text file when you make a plot
+	WriteTextFile>Off: The plotted data will not be written into a text file when you make a plot
+
+	       
+	-------
+	Operate
+	-------
+	Contrast     : set up the contrasting ahd brightness in the viewer (see description above)
+	Padding      : pad the cube into a bigger size
+	Cropping     : crop the cube into a smaller size
+	Substract    : substract the cubic data from an input value
+	PSFshift     : shift the PSF between the hour-glass shape and the deconvolution shape
+	lnTransform  : transform the cubic data uing nature logarithm
+	SpectraON/OFF: Calculate and display the FT of the current cubic data set in the viewer
+
+	
+	-------
+	Control
+	-------
+	Xaxis>On/Off  : set the X-axis   On or Off, X-axis   is along the first  dimension of the cube 
+	Yaxis>On/Off  : set the Y-axis   On or Off, Y-axis   is along the second dimension of the cube 
+	Zaxis>On/Off  : set the Z-axis   On or Off, Z-axis   is along the third  dimension of the cube 
+	Xcross>On/Off : set the X-cross  On or Off, X-cross are lines  to indicate the YZ-projection position in the cube 
+	Ycross>On/Off : set the Y-cross  On or Off, Y-cross are lines  to indicate the XZ-projection position in the cube
+	Zcross>On/Off : set the Z-cross  On or Off, Z-cross are lines  to indicate the XY-projection position in the cube
+	XYlabel>On/Off: set the XY-label On or Off, XY-label is a text to indicate the XY-projection position in the cube
+	XZlabel>On/Off: set the XZ-label On or Off, XZ-label is a text to indicate the XZ-projection position in the cube
+	YZlabel>On/Off: set the YZ-label On or Off, YZ-label is a text to indicate the YZ-projection position in the cube
+	Note : You can use keyboard keys " q, a, w, s ,e, d", which are also used to control the index number of a slice,
+	       to move the positions of a label in the viewer. But you have to first use the keyboard key "f" to switch 
+	       the functions of those keys (see defination in Menu->help).
+	
+	----
+	Help : print how the functional keys are defined
+	----
+	
+	----
+	Info : print the information of the cubic data set
+	----
+	
+	----
+	Exit : exit the viewer
+	----
+
+
+=============
+5. ViewSlices
+=============
+
+"ViewSlices" is designed for viewing and handling a series of sectioning images using 
+the OpenGL package and the GnuPlot and the libdeconv libraries. A series of "PGM" images 
+are loaded into the viewer from the program argument and only their names are saved in
+the program. All of the images must be saved in the byte or short "PGM" formate, have 
+the same dimensions and the same type (byte or short). You can convert your images to 
+the "PGM" format or other formats using scripts in the "scripts" directory.  
+ 
+Only one of the images is displayed in the viewer using OpenGL drawpixel functions. 
+So you are viewing the exact image data. Use keyboard keys or "set->ImageID" in the menu 
+to control which image will be displayed in the viewer. (see defination in Menu->help). 
+
+A sub-region can be defined in any displayed image. The same sub-region will also be 
+set for all of the other images. You can reset this sub-region in any displayed image. 
+You may want to define such a sub-region using "set->SubImage" in the menu if you are 
+only interested in a same certain part in all of your images.
+
+
+*****
+usage
+***** 
+	$ViewSlices <sequenced_images_set_name>
+	For example: if you have a series of "PGM" images in the directory of "/data/MyImages/Seq0/" such as
+	             ---------------------------------------------
+	             slice000.pgm, slice001.pgm, ..., slice100.pgm
+	             ---------------------------------------------
+	Then use:    $ViewSlices /data/MyImages/Seq0/slice
+	
+	Note:        if the images are under the current directory,
+	Then use:    $ViewSlices ./slice
+
+
+****
+Menu
+****
+	----
+	File
+	----
+	Images>Cube   : package all of the loaded images into a cube saved in the format of CCube 
+	SubImages>Cube: package all of the sub-regions in the loaded images into a cube saved in the format of CCube
+	
+	----
+	plot
+	----
+	Image>Histogram   : plot the histogram of the current image 
+	SubImage>Histogram: plot the histogram of the sub-region in the current image
+	Image>Focus       : plot focus values of all the loaded images
+	SubImage>Focus    : plot focus values of the sub-regions in all the loaded images
+	PlotRefresh>On    : do the same function as the one defined in "ViewCube"
+	PlotRefresh>Off   : do the same function as the one defined in "ViewCube"
+	WriteTextFile>On  : do the same funciton as the one defined in "ViewCube"
+	WriteTextFile>Off : do the same funciton as the one defined in "ViewCube"
+	
+	-------
+	Operate
+	-------
+	Contrast    : set up the contrasting ahd brightness in the viewer (see description above)
+	Set>ImageID : set which image is displayed in the viewer
+	Set>Fast    : set the number of images to be fasted or rewarded once 
+	Set>SubImage: set up a sub-region in all of the images
+	
+	----
+	Help : print how the functional keys are defined
+	----
+	
+	----
+	Info : print the information of the sequenced images and the current viewing image
+	----
+	
+	----
+	Exit : exit the viewer
+	----

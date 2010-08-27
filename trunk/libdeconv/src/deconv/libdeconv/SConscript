@@ -1,0 +1,98 @@
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+#
+# Author:    Yuansheng Sun  yuansheng-sun@uiowa.edu
+# Copyright: University of Iowa 2006
+#
+# Filename:  SConscript
+#
+ 	
+Import( 'env' )
+env = env.Clone()
+
+
+conf = Configure(env)
+
+#Boost Config
+if not conf.CheckCXXHeader( 'boost/version.hpp', '<>' ):
+        print 'did not find boost headers - boost Library existing!'
+        Exit(1)
+
+#Math Config
+if not conf.CheckLibWithHeader( 'm', 'math.h', 'C' ):
+	print 'did not find math.h or libm.a - C Math Library existing!'
+	Exit(1)
+
+#FFT library config
+if not conf.CheckLibWithHeader( 'fftw3', 'fftw3.h', 'C' ):
+	print 'did not find fftw3.h or libfftw3.a - fftw3 Library (double floating) existing!'		
+	Exit(1)
+if not conf.CheckLib( 'fftw3f' ):
+	print 'did not find libfftw3f.a - fftw3 Library (single floating) existing!'		
+	Exit(1)
+
+#GSL-Gnu Science Library config
+gslHeaders = [ 'gsl/gsl_integration.h', 'gsl/gsl_errno.h', 'gsl/gsl_spline.h' ]
+if not conf.CheckLib( 'gslcblas' ):
+	print 'did not find libgslcblas.a - Gnu Science Library existing!'
+	Exit(1)
+if not conf.CheckLibWithHeader( 'gsl', gslHeaders, 'C' ): 
+	print 'did not find libgsl.a - Gnu Science Library existing!'
+	Exit(1)
+
+env = conf.Finish()
+
+
+headers = Split( """
+			MYdef.h
+			MYerror.h
+			MYimage.h
+			MYpgm.h
+			MYcube.h
+			SHIFTfft.h
+			FFTW3fft.h
+			CSlice.h
+			CCube.h
+			FluoPSF.h
+			Fluo3DPSF.h
+			FluoRZPSF.h
+			deconvolver.h
+			LWCGdeconvolver.h
+			LWdeconvolver.h
+			CGdeconvolver.h
+			EMdeconvolver.h
+		""" )
+
+sources = Split( """
+			MYpgm.cc
+			MYcube.cc
+			SHIFTfft.cc
+			FFTW3fft.cc
+			CSlice.cc
+			CCube.cc
+			FluoPSF.cc
+			Fluo3DPSF.cc
+			FluoRZPSF.cc
+			deconvolver.cc
+			LWCGdeconvolver.cc
+			LWdeconvolver.cc
+			CGdeconvolver.cc
+			EMdeconvolver.cc
+		""" )
+
+lib = env.Library( 'deconv', sources )
+
+env.Alias('install', env.Install( env['LIB_DIR'], lib ))
+env.Alias('install', env.Install( env['INC_DIR'], headers ))
+

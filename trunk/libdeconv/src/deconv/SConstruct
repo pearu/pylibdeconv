@@ -1,0 +1,101 @@
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+#
+# Author:    Yuansheng Sun (yuansheng-sun@uiowa.edu)
+# Copyright: University of Iowa 2006
+#
+# Filename:  SConstruct
+#
+
+
+import os 
+import platform
+
+os_name			= platform.uname()[0]
+
+include_dirs    = [ '#' ]
+lib_dirs        = [ '#' ]
+
+vars = Variables()
+
+vars.AddVariables ( 
+	('INC_DIR', 
+	'The directory where headers should be installed.', 
+	'/usr/local/include/deconv' ), 
+	( 'LIB_DIR', 
+	'The directory where libraries should be installed.', 
+	'/usr/local/lib' ),    	
+	( 'BIN_DIR', 
+	'The directory where binaries should be installed.', 
+	'/usr/local/bin' ),
+	BoolVariable( 'debug',   'Compile with debugging symbols', True ), 
+)         
+
+if os_name == 'Darwin':
+	include_dirs = Split( """
+		/usr/include
+		/usr/X11/include
+		/usr/local/include
+		/usr/include/boost
+		/usr/include/boost/filesystem
+		..
+		""" )
+	lib_dirs	 = Split( """
+		/usr/lib
+		/usr/local/lib
+		/usr/X11/lib
+		""" )
+elif os_name == 'Linux':
+	include_dirs = Split( """
+		/usr/local/include
+		/usr/local/include/cas
+		/usr/include/boost
+		/usr/include/boost/filesystem
+		#build/libdeconv
+		""" )
+	lib_dirs = Split( """
+		/usr/local/lib
+		""" )
+else :
+	print 'The $os_name platform is not currently supported'
+	Exit( 1 )
+
+env = Environment(
+        ENV				= os.environ,
+        variables       = vars,
+       CPPPATH          = include_dirs,
+        LIBPATH         = lib_dirs
+)
+
+Help( vars.GenerateHelpText( env ) )
+
+env.Prepend( LINKFLAGS = [ '-Wall' ] )
+
+if env['debug']:
+	env.Prepend(
+        	CCFLAGS = [ '-g' ],
+        	LINKFLAGS = [ '-g' ],
+	)
+else:
+	env.Prepend(
+        	CCFLAGS = [ '-O3' ],
+        	LINKFLAGS = [ '-O3' ],
+	)
+
+Export( 'env' )
+
+env.SConscript( 'libdeconv/SConscript', build_dir = 'build/libdeconv' )
+env.SConscript( 'utilities/SConscript', build_dir = 'build/utilities' )
+env.SConscript( 'scripts/SConscript' )
+env.SConscript( 'viewer/SConscript', build_dir = 'build/viewer' )

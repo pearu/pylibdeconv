@@ -1,0 +1,11 @@
+#! /bin/bash
+
+ECHO=/bin/echo
+GREP=/bin/grep
+CONVERT=convert
+
+for file in $@
+do
+        TIFF=`$ECHO $file | $GREP -o ".*\."`tiff
+        $CONVERT $file $TIFF
+done

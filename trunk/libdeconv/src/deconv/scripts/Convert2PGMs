@@ -1,0 +1,13 @@
+#! /bin/bash
+
+ECHO=/bin/echo
+GREP=/bin/grep
+CONVERT=convert
+
+for file in $@
+do
+        PGM=`$ECHO $file | $GREP -o ".*\."`pgm
+        $CONVERT $file $PGM
+#!      $CONVERT $file +compress $PGM
+done
+

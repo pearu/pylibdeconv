@@ -1,0 +1,52 @@
+================================================================
+This README is a instruction for using scripts in this directory
+================================================================
+
+Author: Yuansheng Sun (yuansheng-sun@uiowa.edu)
+Copyright: University of Iowa 2006
+
+
+Scripts list:
+	Convert2PGMs
+	Convert2PNGs
+	Convert2BMPs
+	Convert2JPGs
+	Convert2TIFFs
+	
+
+In order to use the scripts, you need to have the "ImageMagick" software installed. 
+"ImageMagick" is a free free software suite and its license is compatible with the GPL.
+You can get its details or download it at http://www.imagemagick.org/script/index.php
+
+
+=====
+Usage
+=====
+
+Each script is designed to convert input images to a certain format
+using the "convert" command in "ImageMagick". The input images will 
+not be changed and new images in the certain format will be created. 
+
+Convert2PGMS  : create images from converting the image format to "pgm"
+Convert2PNGS  : create images from converting the image format to "png"
+Convert2BMPS  : create images from converting the image format to "bmp"
+Convert2JGPS  : create images from converting the image format to "jpg"
+Convert2TIFFS : create images from converting the image format to "tiff"
+
+For example: if you want to create "pgm" images from a bunch of "tiff" images as follows:
+             -------------------------------------------------
+             slice000.tiff, slice001.tiff, ..., slice100.tiff,
+             -------------------------------------------------
+            
+             copy the script file "Convert2PPMs" into the directory where images are and use
+             ----------------------
+             $./Convert2PPMs *.tiff
+             ---------------------- 
+             
+             Then you will have both "tiff" and "pgm" images in the directory, such as
+             -------------------------------------------------------------------------------------------
+             slice000.pgm, slice000.tiff, slice001.pgm, slice001.tiff, ..., slice100.pgm, slice100.tiff.
+             -------------------------------------------------------------------------------------------
+           
+Note: please be aware of the properties of the script files. They must be executable. Use "chmod 755 *". 
+
