@@ -138,17 +138,9 @@ typedef struct
 class CGdeconvolver : public LWCGdeconvolver
 {
 	public:
-	typedef boost::shared_ptr< CGdeconvolver > Ptr ;
-	
-	
-	virtual ~CGdeconvolver() {}
-	
-	
-	/*
-	 *	Constructor
-	 */
-	CGdeconvolver() { init() ; }
-	
+//	typedef boost::shared_ptr< CGdeconvolver > Ptr ;	
+		~CGdeconvolver() ;
+		CGdeconvolver () ;
 	
 	/*
 	 *	Set up the control flags and default parameters used for CGdeconvolver
@@ -206,8 +198,8 @@ class CGdeconvolver : public LWCGdeconvolver
 	private:
 	bool           	_ApplyIR ;
 	double         	_CGIRpenalty ;	
-	FFTW3_FFT::Ptr 	_FFTplanff ;
-	FFTW3_FFT::Ptr 	_FFTplanbb ;
+	FFTW3_FFT* 		_FFTplanff ;
+	FFTW3_FFT* 		_FFTplanbb ;
         
 	void    _CGprintStatus( int stage ) ;
         

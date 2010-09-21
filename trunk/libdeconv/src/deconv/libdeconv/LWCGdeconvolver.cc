@@ -188,38 +188,30 @@ double LWCGdeconvolver::_getSumLikelihood( int size, double cv, float * object0,
 	unsigned int iter = 0 ;	
 	double sum_likelihood = 0.0 ;
 
-	fprintf (stderr, "1 1\n") ;
 	for( int i = 0 ; i < _Space ; i++ ) object[i] = object0[i] ;
 	_FFTplanf->execute( object, object_re, object_im ) ;
 
-	fprintf (stderr, "1 2\n") ;
 	while( iter < _ConditioningIteration )
 	{
-		fprintf (stderr, "1 2 1\n") ;
 		_update( size, cv, object_re, object_im, image_re, image_im, psf_re, psf_im, otf ) ;
 		
-		fprintf (stderr, "1 2 2\n") ;
 		for( int i = 0 ; i < _Space ; i++ )
 		{
 			object[i] += object_re[i] ;
 			if( object[i] < 0.0 ) object[i] = 0.0 ;
 		}
        		
-		fprintf (stderr, "1 2 3\n") ;
 		if( SpacialSupport != NULL )
 		{
 			for( int i = 0 ; i < _Space ; i++ ) object[i] *= ((double) SpacialSupport[i]) ;
 		}
 
-		fprintf (stderr, "1 2 4\n") ;
 		_FFTplanf->execute( object, object_re, object_im ) ;
 
-		fprintf (stderr, "1 2 5\n") ;
 		sum_likelihood += _getLikelihood( size, image_re, image_im, psf_re, psf_im, object_re, object_im ) ;
 
 		iter++ ;
 	}
-   	fprintf (stderr, "1 3\n") ;
  	
 	return sum_likelihood ;
 }
@@ -305,7 +297,6 @@ double LWCGdeconvolver::_runConditioning( int size, float * object0, float * obj
 	double last_likelihood = likelihood ;
 	double x0, x1, x2, x3, f1, f2 ;
 
-	fprintf (stderr, "1\n") ;
 	x0 = 1.0 ;
 	while( likelihood <= last_likelihood )
 	{
@@ -315,7 +306,6 @@ double LWCGdeconvolver::_runConditioning( int size, float * object0, float * obj
 		if( _CheckStatus ) _printConditioning( x0, likelihood ) ;
 	}        	       	       
 
-	fprintf (stderr, "2\n") ;
 	x1 = x0 * 10.0 ;
 	x3 = x0 * 100.0 ;    	
 	if( fabs(x3-x1) > fabs(x1-x0) )
@@ -333,7 +323,6 @@ double LWCGdeconvolver::_runConditioning( int size, float * object0, float * obj
 		f1 = _getSumLikelihood( size, x1, object0, object, object_re, object_im, image_re, image_im, psf_re, psf_im, otf, SpacialSupport ) ;
 		if( _CheckStatus ) _printConditioning( x1, f1 ) ;
 	}
-    fprintf (stderr, "3\n") ;
 	   	
 	while( fabs(x3-x0) > _ConditioningTolerance * ( fabs(x1) + fabs(x2) ) )
 	{
@@ -356,7 +345,6 @@ double LWCGdeconvolver::_runConditioning( int size, float * object0, float * obj
 			if( _CheckStatus ) _printConditioning( x1, f1 ) ;
 		}
 	}
-	fprintf (stderr, "4\n") ;
 
 	if( f1 < f2 )
 	{

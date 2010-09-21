@@ -63,9 +63,9 @@ The cubic data is displayed in one or all of three projections (XY/XZ/YZ-project
 projection is made using the OpenGL texture mapping functions from a 2-D slice in the cube. 
 A 2-D Slice is indexed along the X, Y or Z-dimension, which is the cube's first, second or 
 third dimension. Use the keyboard keys "q, a, w, s, e, d" to control the index number of 
-a 2-D slice along the X, Y or Z-dimension (see defination in Menu->help). 
+a 2-D slice along the X, Y or Z-dimension (see definition in Menu->help). 
 
-Please be awared that this cubic data set may be changed after performing some processes on it in the viewer.
+Please be aware that this cubic data set may be changed after performing some processes on it in the viewer.
 
 *****
 usage

@@ -24,7 +24,9 @@
 
 
 #include <math.h>
-#include "MYdef.h"
+#include <boost/shared_ptr.hpp>
+#include <boost/shared_array.hpp>
+#include <fftw3.h>
 #include "MYimage.h"
 
 
@@ -93,7 +95,7 @@ template< typename T >
 class CSlice 
 {	
 	public:	
-	typedef boost::shared_array< T >  DataArray ;
+//	typedef boost::shared_array< T >  DataArray ;
 	
 	
 	/*
@@ -119,7 +121,6 @@ class CSlice
 		init( width, height, data) ;
 	}
 
-	
 	/*
 	 *	Operator "=" constructor : assign slice to the CSlice
 	 */
@@ -127,10 +128,11 @@ class CSlice
 	{
 		_width  = slice.width()  ;
 		_height = slice.height() ;
-		if( _data ) _data.reset() ;
 		
-		DataArray temp( new T[ _width * _height ] ) ;
-		_data = temp ;
+		if( _data )
+			delete [] _data ;
+		
+		_data = new T [_width * _height] ;
 		
 		for( int i = 0 ; i < _width * _height ; i++ )
 		{
@@ -178,17 +180,12 @@ class CSlice
 		{
 			_width  = width ;
 			_height = height ;
-			if( _data ) _data.reset() ;
+//			if (_data)
+//				delete [] _data ;
 			
-			if( data == NULL )
+			_data = (T*) new T [width * height] ;
+			if (data)
 			{
-				DataArray temp( new T[ width * height ] ) ;
-				_data = temp ;
-			}
-			else 
-			{
-				DataArray temp( new T[ width * height ] ) ;
-				_data = temp ;					
 				for( int i = 0 ; i < width * height ; i++ )
 				{
 					_data[i] = data[i] ;
@@ -199,6 +196,7 @@ class CSlice
 		{
 			_width  = 0 ;
 			_height = 0 ;
+			_data = NULL ;
 		}			
 		else 
 		{
@@ -223,7 +221,7 @@ class CSlice
 		
 		if( !ret && throw_if_not ) 
 		{
-			throw SliceError( _width, _height, _data.get() ) ;
+			throw SliceError( _width, _height, _data) ;
 		}
 		
 		return ret ;
@@ -239,7 +237,9 @@ class CSlice
 		{
 			_width  = 0 ;
 			_height = 0 ;
-			_data.reset() ;
+			
+			if (_data)
+				delete [] _data ;
 		}
 	}
 
@@ -254,7 +254,7 @@ class CSlice
 	int	width   () const            { return _width ;               }
 	int	height  () const            { return _height ;              }
 	int	size    () const            { return ( _width * _height ) ; }
-	T*	data    () const            { return _data.get() ;          }
+	T*	data    () const            { return _data ;          }
         
         
 	/*
@@ -403,9 +403,9 @@ class CSlice
 	private :		
 	int       _width ;
 	int       _height ;
-	DataArray _data ;
+	T* 		  _data ;
 	
-	void _init( int width, int height, DataArray data )
+	void _init( int width, int height, T* data )
 	{
 		_width  = width ;
 		_height = height ;
@@ -424,16 +424,18 @@ int CSlice<T>::read( const char * filename )
 	init( width, height ) ;
 	if( greylevel < 256 ) 
 	{
-		ByteArray buf( new unsigned char[ width * height ] ) ;
-		read_my_byte_image_data( filename, width*height, buf.get() ) ;
+		unsigned char *buf = new unsigned char [width * height] ;
+		read_my_byte_image_data( filename, width*height, buf ) ;
 		for( int i = 0 ; i < width*height ; i++ ) _data[i] = (T) buf[i] ;
+		delete [] buf ;
 		return 255 ;
 	}
 	else 
 	{
-		ShortArray buf( new unsigned short[ width * height ] ) ;
-		read_my_short_image_data( filename, width*height, buf.get() ) ;
+		unsigned short *buf = new unsigned short [width * height] ;
+		read_my_short_image_data( filename, width*height, buf ) ;
 		for( int i = 0 ; i < width*height ; i++ ) _data[i] = (T) buf[i] ;
+		delete [] buf ;
 		return 65535 ;
 	}
 }
@@ -484,7 +486,7 @@ int CSlice<T>::crop( int width, int height, int cx, int cy )
 		    cy-half_height >= 0 && cy+half_height+odd_height <= _height )
 		{
 			int k = 0 ;
-			DataArray temp( new T[ width * height ] ) ;
+			T *temp = new T[width * height] ;
 			
 			for( int j = cy-half_height ; j < cy+half_height+odd_height ; j++ )
 				for( int i = cx-half_width ; i < cx+half_width+odd_width ; i++ )
@@ -494,6 +496,7 @@ int CSlice<T>::crop( int width, int height, int cx, int cy )
 				}
 
 			_init( width, height, temp ) ;
+			delete [] temp ;
 		}
 		else
 		{
@@ -515,8 +518,9 @@ int CSlice<T>::pad( int width, int height, T value )
 	{
 		if( width >= _width || height >= _height )
 		{
-			DataArray temp( new T[ width * height ] ) ;
-			for( int i = 0 ; i < width * height ; i++ ) _data[i] = value ;
+			T* temp = new T [width * height] ;
+			for( int i = 0 ; i < width * height ; i++ ) 
+				_data[i] = value ;
 			
 			for( int j = 0 ; j < _height ; j++ )
 				for( int i = 0 ; i < _width ; i++ )
@@ -526,6 +530,7 @@ int CSlice<T>::pad( int width, int height, T value )
 				}
 
 			_init( width, height, temp ) ;
+			delete [] temp ;
 		}
 		else
 		{

@@ -13,11 +13,14 @@ def configuration(parent_package='',top_path=None):
     blas_opt = get_info('blas_opt',notfound_action=2)
     if not blas_opt:
         raise NotFoundError,'no blas resources found'
-    atlas_version = ([v[3:-3] for k,v in blas_opt.get('define_macros',[]) \
+    define_macros = blas_opt.get('define_macros',[])
+    atlas_version = ([v[3:-3] for k,v in define_macros \
                           if k=='ATLAS_INFO']+[None])[0]
     if atlas_version:
         print ('ATLAS version: %s' % atlas_version)
     dict_append(libs_info, **blas_opt)
+    if ('ATLAS_REQUIRES_GFORTRAN', None) in define_macros:
+        dict_append(libs_info, libraries = ['gfortran'])
     fftw3_info = get_info('fftw3',notfound_action=2)
     dict_append (fftw3_info, libraries = ['fftw3f'])
     if not fftw3_info:
@@ -30,7 +33,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_deconv',
                          sources = ['deconv.i'],
                          include_dirs = [deconv_src],
-                         extra_info = libs_info
+                         extra_info = libs_info,
                          )
 
     config.make_svn_version_py()

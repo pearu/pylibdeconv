@@ -24,11 +24,6 @@ env = env.Clone()
 
 conf = Configure(env)
 
-#Boost Config
-if not conf.CheckCXXHeader( 'boost/version.hpp', '<>' ):
-        print 'did not find boost headers - boost Library existing!'
-        Exit(1)
-
 #Math Config
 if not conf.CheckLibWithHeader( 'm', 'math.h', 'C' ):
 	print 'did not find math.h or libm.a - C Math Library existing!'
@@ -55,7 +50,6 @@ env = conf.Finish()
 
 
 headers = Split( """
-			MYdef.h
 			MYerror.h
 			MYimage.h
 			MYpgm.h
@@ -75,6 +69,7 @@ headers = Split( """
 		""" )
 
 sources = Split( """
+			new.cc
 			MYpgm.cc
 			MYcube.cc
 			SHIFTfft.cc

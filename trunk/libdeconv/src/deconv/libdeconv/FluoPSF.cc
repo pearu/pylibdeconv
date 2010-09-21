@@ -18,7 +18,7 @@
  * Filename:  FluoPSF.cc
  */
  
-
+#include <stdio.h>
 #include <math.h>
 #include "FluoPSF.h" 
 

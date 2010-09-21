@@ -24,7 +24,6 @@
 
 
 #include <gsl/gsl_integration.h>
-#include "MYdef.h"
 #include "MYerror.h"
 
 

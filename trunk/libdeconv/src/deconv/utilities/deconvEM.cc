@@ -19,8 +19,8 @@
  */
  
 
-#include "deconv/EMdeconvolver.h"
-#include "deconv/CCube.h"
+#include "libdeconv/EMdeconvolver.h"
+#include "libdeconv/CCube.h"
 
 
 /*
@@ -67,7 +67,7 @@ int main( int argc, char ** argv )
 	CCube<DataType>      image ;
 	CCube<DataType>      psf ;
 	CCube<DataType>      object ;
-	EMdeconvolver        em ;
+	EMdeconvolver*       em = new EMdeconvolver() ;
 	WorkSpaceType        ws ;
 	FILE*                fp ;
 	char                 filename[256] ;
@@ -85,21 +85,21 @@ int main( int argc, char ** argv )
 		if( atoi(argv[5]) == 0 ) acceleration = false ;
 		else                     acceleration = true ;
 
-		em.init( acceleration, Apply_Normalization, Track_Likelihood, Track_Max_In_Object, Check_Program_Run ) ; 
+		em->init( acceleration, Apply_Normalization, Track_Likelihood, Track_Max_In_Object, Check_Program_Run ) ; 
 		
-		if( argc > 6 ) em.setMaxRunIteration( (unsigned int)( atoi(argv[6]) ) ) ; 
-		if( argc > 7 ) em.setCriterion( (double)( atof(argv[7]) ) ) ;   
-		if( argc > 8 ) em.setEMIRiteration( (unsigned int)( atoi(argv[8]) ) ) ;
-		if( argc > 9 ) em.setEMIRpenalty( (double)( atof(argv[9]) ) ) ;
+		if( argc > 6 ) em->setMaxRunIteration( (unsigned int)( atoi(argv[6]) ) ) ; 
+		if( argc > 7 ) em->setCriterion( (double)( atof(argv[7]) ) ) ;   
+		if( argc > 8 ) em->setEMIRiteration( (unsigned int)( atoi(argv[8]) ) ) ;
+		if( argc > 9 ) em->setEMIRpenalty( (double)( atof(argv[9]) ) ) ;
 		
-		em.run( image.length(), image.width(), image.height(), image.data(), psf.data(), object.data(), ws ) ;
+		em->run( image.length(), image.width(), image.height(), image.data(), psf.data(), object.data(), ws ) ;
 	
 		sprintf( filename, "%s_plan.txt", argv[4] ) ;
-		em.exportEM( filename ) ;
+		em->exportEM( filename ) ;
 		
-		vtrack = new double [ em.MaxRunIteration() ] ;
+		vtrack = new double [ em->MaxRunIteration() ] ;
 
-		vtrack_size = em.exportUpdateTrack( vtrack ) ;
+		vtrack_size = em->exportUpdateTrack( vtrack ) ;
 		if( vtrack_size > 0 )
 		{
 			sprintf( filename, "%s_Update.txt", argv[4] ) ;
@@ -107,9 +107,9 @@ int main( int argc, char ** argv )
 			for( int i = 0; i < vtrack_size; i++ ) fprintf( fp, "%4d %12.6e\n", i, vtrack[i] ) ;
 			fclose( fp ) ;
 
-			if( em.TrackMaxInObject() )
+			if( em->TrackMaxInObject() )
 			{
-				vtrack_size = em.exportObjectMaxTrack( vtrack ) ;
+				vtrack_size = em->exportObjectMaxTrack( vtrack ) ;
 				sprintf( filename, "%s_MaxIntensity.txt", argv[4] ) ;
 				fp = fopen( filename, "wt" ) ;
 				for( int i = 0; i < vtrack_size; i++ ) fprintf( fp, "%4d %12.6e\n", i, vtrack[i] ) ;
@@ -117,9 +117,9 @@ int main( int argc, char ** argv )
 			}
 			else	std::cout << " MaxIntensity of deconvolved object wasn't tracked iteratively.\n" ;
 
-			if( em.TrackLikelihood() )
+			if( em->TrackLikelihood() )
 			{
-				vtrack_size = em.exportLikelihoodTrack( vtrack ) ;
+				vtrack_size = em->exportLikelihoodTrack( vtrack ) ;
 				sprintf( filename, "%s_Likelihood.txt", argv[4] ) ;
 				fp = fopen( filename, "wt" ) ;
 				for( int i = 0; i < vtrack_size; i++ ) fprintf( fp, "%4d %12.6e\n", i, vtrack[i] ) ;
@@ -132,6 +132,7 @@ int main( int argc, char ** argv )
 		else	std::cout << " EMdeconvolver::run() didNOT go into the loop.\n" ;
 		
 		delete [] vtrack ;
+		delete em ;
 	}
 	else
 	{

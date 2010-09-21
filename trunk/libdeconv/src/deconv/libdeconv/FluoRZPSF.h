@@ -145,7 +145,7 @@ class FluoRZPSF : public FluoPSF
 	double 	RadialCalibration()  { return _DR ;          }
 	int    	RadialDimension()    { return _DimR ;        }
 	int     OpticalSecions()     { return _Sections;     }
-	double* RZpsfData()          { return _RZpsf.get() ; }
+	double* RZpsfData()          { return _RZpsf ; }
 
 
 	/*
@@ -238,7 +238,7 @@ class FluoRZPSF : public FluoPSF
 	private:
 	int         _DimR, _Sections ;
 	double      _DR ;
-	DoubleArray _RZpsf ;
+	double*     _RZpsf ;
 	int         _check3Dpsf( int nx, int ny, int nz, double dx, double dy, double dz, int Points2Sum ) ;
 } ;
 

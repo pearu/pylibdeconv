@@ -133,10 +133,9 @@ void FluoRZPSF::read( const char * filehead )
 	fp = fopen( filename, "rb" ) ;
 	if( fp )
 	{
-		DoubleArray temp( new double[ _DimR * _Sections ] ) ;
-		_RZpsf = temp ;
+	 	double* _RZpsf =  new double[ _DimR * _Sections ] ;
 		
-		if( (int) fread( _RZpsf.get(), sizeof(double), (_DimR * _Sections), fp ) != (_DimR * _Sections) )
+		if( (int) fread( _RZpsf, sizeof(double), (_DimR * _Sections), fp ) != (_DimR * _Sections) )
 		{
 			throw ReadDataError( std::string(filename) ) ;	
 		}
@@ -173,7 +172,7 @@ void FluoRZPSF::save( const char * filehead )
 		fp = fopen( filename, "wb" ) ;
 		if( fp )
 		{
-			if( (int) fwrite( _RZpsf.get(), sizeof(double), (_DimR * _Sections), fp ) != (_DimR * _Sections) )
+			if( (int) fwrite( _RZpsf, sizeof(double), (_DimR * _Sections), fp ) != (_DimR * _Sections) )
 			{
 				throw WriteDataError( std::string(filename) ) ;	
 			}
@@ -195,8 +194,7 @@ void FluoRZPSF::create( bool Check )
 	{
 		double NNA = _NA * _NA ;
 		
-		DoubleArray temp( new double[ _DimR * _Sections ] ) ;
-		_RZpsf = temp ;
+		_RZpsf	=  new double[ _DimR * _Sections ] ;
 		
 		gsl_integration_workspace * ws = gsl_integration_workspace_alloc( IntegrationLimit ) ;
 	
@@ -240,8 +238,8 @@ int FluoRZPSF::get3Dpsf( int nx, int ny, int nz, double dx, double dy, double dz
 		dyy = dy / ((double) Points2Sum ) ;
 		dzz = dz / _DZ ;
 	
-		DoubleArray x( new double[ _DimR ] ) ;
-		DoubleArray y( new double[ _DimR ] ) ;
+		double* x = new double[ _DimR ] ;
+		double* y = new double[ _DimR ] ;
 		
 		for( int i = 0 ; i < _DimR ; i++ ) x[i] = ((double) i) * _DR ;
 		
@@ -267,7 +265,7 @@ int FluoRZPSF::get3Dpsf( int nx, int ny, int nz, double dx, double dy, double dz
 		{
 			slice.fillslice( 0.0 ) ;
 			for( int i = 0 ; i < _DimR ; i++ ) y[i] = _RZpsf[ i + k * ndz * _DimR ] ;
-			gsl_spline_init( spline, x.get(), y.get(), _DimR ) ;
+			gsl_spline_init( spline, x, y, _DimR ) ;
 			for( int j = 0 ; j <= half_sum_ny ; j++ )
 				for( int i = 0 ; i <= half_sum_nx ; i++ )
 				{
@@ -308,7 +306,9 @@ int FluoRZPSF::get3Dpsf( int nx, int ny, int nz, double dx, double dy, double dz
 				}
 			}
 		}
-        
+		delete [] x ;
+		delete [] y ;
+		
 		weight = 0.0 ;
 		for( int i = 0 ; i < nx * ny * nz ; i++ ) weight += psf[i] ;
 		for( int i = 0 ; i < nx * ny * nz ; i++ ) psf[i] /= weight ;
@@ -363,8 +363,8 @@ int FluoRZPSF::get3Dpsf( int nx, int ny, int nz, double dx, double dy, double dz
 		dyy = dy / ((double) Points2Sum ) ;
 		dzz = dz / _DZ ;
 	
-		DoubleArray x( new double[ _DimR ] ) ;
-		DoubleArray y( new double[ _DimR ] ) ;
+		double* x = new double[ _DimR ] ;
+		double* y = new double[ _DimR ] ;
 
 		for( int i = 0 ; i < _DimR ; i++ ) x[i] = ((double) i) * _DR ;
 		
@@ -390,7 +390,7 @@ int FluoRZPSF::get3Dpsf( int nx, int ny, int nz, double dx, double dy, double dz
 		{
 			slice.fillslice( 0.0 ) ;
 			for( int i = 0 ; i < _DimR ; i++ ) y[i] = _RZpsf[ i + k * ndz * _DimR ] ;
-			gsl_spline_init( spline, x.get(), y.get(), _DimR ) ;
+			gsl_spline_init( spline, x, y, _DimR ) ;
 			for( int j = 0 ; j <= half_sum_ny ; j++ )
 				for( int i = 0 ; i <= half_sum_nx ; i++ )
 				{
@@ -431,7 +431,9 @@ int FluoRZPSF::get3Dpsf( int nx, int ny, int nz, double dx, double dy, double dz
 				}
 			}
 		}
-        
+		delete [] x ;
+		delete [] y ;
+		
 		weight = 0.0 ;
 		for( int i = 0 ; i < nx * ny * nz ; i++ ) weight += psf[i] ;
 		for( int i = 0 ; i < nx * ny * nz ; i++ ) psf[i] /= weight ;

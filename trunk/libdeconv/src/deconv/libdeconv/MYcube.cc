@@ -20,9 +20,8 @@
 
 
 #include <stdio.h>
+#include <unistd.h>
 #include "MYcube.h"
-
-
 
 void read_my_cube_hdr( std::string filehead, int& length, int& width, int& height )
 {
@@ -30,99 +29,115 @@ void read_my_cube_hdr( std::string filehead, int& length, int& width, int& heigh
 	FILE * fp = fopen( filename.c_str(), "rt" ) ;
   	
 	if( !fp ) 
-	{
 		throw ErrnoError( filename ) ;
-	}
-	else 
-	{
-		if( (int) fscanf( fp, "%d", &height ) != 1 ) height = 0 ;
-		if( (int) fscanf( fp, "%d", &width  ) != 1 ) width  = 0 ;
-		if( (int) fscanf( fp, "%d", &length ) != 1 ) length = 0 ;
-		fclose( fp ) ;
+	else
+	{ 
+		int h, w, l ;
+		
+		if (fscanf (fp, "%d %d %d", &h, &w, &l) != 3) 
+			throw ReadDataError( std::string(filename) ) ;
+
+		width = w ;
+		height = h ;
+		length = l ;
+		
+		fclose (fp) ;
 	}
 }
 
-
-
 void read_my_byte_cube_data( const char* filename, int cube_size, unsigned char * buf )
 {
-	FILE * fp = fopen( filename, "rb" ) ;
+	FILE * fp = fopen( filename, "r" ) ;
 	
 	if( !fp ) 
-	{
 		throw ErrnoError( std::string(filename) ) ;
-	}
 	else
 	{
-		if( (int) fread( buf, sizeof(unsigned char), cube_size, fp ) != cube_size )
-		{
-			throw ReadDataError( std::string(filename) ) ;	
+		int index = 0 ;
+		unsigned char* pbuf = buf ;
+
+		while (index < cube_size) {
+			if (!fread (pbuf++, sizeof (unsigned char), 1, fp))
+				throw ReadDataError (std::string(filename)) ;
+				
+			index ++ ;
 		}
+
 		fclose( fp ) ;
 	} 
 }
 
-
-
 void read_my_short_cube_data( const char* filename, int cube_size, unsigned short * buf )
 {
-	FILE * fp = fopen( filename, "rb" ) ;
+	FILE * fp = fopen( filename, "r" ) ;
 	
 	if( !fp ) 
-	{
 		throw ErrnoError( std::string(filename) ) ;
-	}
 	else
 	{
-		if( (int) fread( buf, sizeof(unsigned short), cube_size, fp ) != cube_size )
-		{
-			throw ReadDataError( std::string(filename) ) ;	
+		int index = 0 ;
+		unsigned short* pbuf = buf ;
+
+		while (!feof(fp)) {
+			unsigned short val ;
+			if (!fread (&val, sizeof (unsigned short), 1, fp))
+				throw ReadDataError (std::string(filename)) ;
+				
+         	swab ((char*)&val, (char*)pbuf++, sizeof (unsigned short)) ;
+			index ++ ;
 		}
+
 		fclose( fp ) ;
+
+		if (index != cube_size)
+			throw ReadDataError (std::string(filename)) ;		
 	}
 }
-
-
 
 void read_my_single_cube_data( const char* filename, int cube_size, float * buf )
 {
-	FILE * fp = fopen( filename, "rb" ) ;
+	FILE * fp = fopen( filename, "r" ) ;
 	
 	if( !fp ) 
-	{
 		throw ErrnoError( std::string(filename) ) ;
-	}
 	else
 	{
-		if( (int) fread( buf, sizeof(float), cube_size, fp ) != cube_size )
-		{
-			throw ReadDataError( std::string(filename) ) ;	
+		int index = 0 ;
+		float* pbuf = buf ;
+
+		while (index < cube_size) {
+			
+			if (!fread (pbuf++, sizeof (float), 1, fp))
+				throw ReadDataError (std::string(filename)) ;
+				
+			index ++ ;
 		}
+
 		fclose( fp ) ;
 	}
 }
-
-
 
 void read_my_double_cube_data( const char* filename, int cube_size, double * buf )
 {
-	FILE * fp = fopen( filename, "rb" ) ;
+	FILE * fp = fopen( filename, "r" ) ;
 	
 	if( !fp ) 
-	{
 		throw ErrnoError( std::string(filename) ) ;
-	}
 	else
 	{
-		if( (int) fread( buf, sizeof(double), cube_size, fp ) != cube_size )
-		{
-			throw ReadDataError( std::string(filename) ) ;	
+		int index = 0 ;
+		double* pbuf = buf ;
+
+		while (index < cube_size) {
+			if (!fread (pbuf++, sizeof (double), 1, fp))
+				throw ReadDataError (std::string(filename)) ;
+				
+			index ++ ;
 		}
+
 		fclose( fp ) ;
 	}
 }
-
-
 
 void write_my_cube_hdr( const char* filehead, int length, int width, int height )
 {
@@ -130,17 +145,13 @@ void write_my_cube_hdr( const char* filehead, int length, int width, int height 
 	FILE * fp = fopen( filename.c_str(), "wt" ) ;
   	
 	if( !fp ) 
-	{
 		throw ErrnoError( filename ) ;
-	}
 	else 
 	{
 		fprintf( fp, "%d\n%d\n%d\n", height, width, length ) ;
 		fclose( fp ) ;
 	}
 }
-
-
 
 void write_my_byte_cube( const char* filehead, int length, int width, int height, unsigned char * buf )
 {
@@ -150,21 +161,23 @@ void write_my_byte_cube( const char* filehead, int length, int width, int height
 	FILE * fp = fopen( filename.c_str(), "wb" ) ;
   	
 	if( !fp ) 
-	{
 		throw ErrnoError( filename ) ;
-	}
 	else
 	{
-		int cube_size = length * width * height ;
-		if( (int) fwrite( buf, sizeof(unsigned char), cube_size, fp ) != cube_size )
-		{
-			throw WriteDataError( filename ) ;	
+		int index = 0 ;
+		unsigned char* pbuf = buf ;
+
+		while (index < length * width * height) {
+
+			if (!fwrite (pbuf++, sizeof (unsigned char), 1, fp))
+				throw WriteDataError (std::string(filename)) ;
+				
+			index ++ ;
 		}
+
 		fclose( fp ) ;
 	} 
 }
-
-
 
 void write_my_short_cube( const char* filehead, int length, int width, int height, unsigned short * buf )
 {
@@ -174,21 +187,25 @@ void write_my_short_cube( const char* filehead, int length, int width, int heigh
 	FILE * fp = fopen( filename.c_str(), "wb" ) ;
   	
 	if( !fp ) 
-	{
 		throw ErrnoError( filename ) ;
-	}
 	else
 	{
-		int cube_size = length * width * height ;
-		if( (int) fwrite( buf, sizeof(unsigned short), cube_size, fp ) != cube_size )
-		{
-			throw WriteDataError( filename ) ;	
+		int index = 0 ;
+		unsigned short* pbuf = buf ;
+
+		while (index < length * height * width) {
+			unsigned short val ;
+         	swab ((char*)pbuf++, (char*)&val, sizeof (unsigned short)) ;
+
+			if (!fwrite (&val, sizeof (unsigned short), 1, fp))
+				throw WriteDataError (std::string(filename)) ;
+				
+			index ++ ;
 		}
+
 		fclose( fp ) ;
 	}
 }
-
-
 
 void write_my_single_cube( const char* filehead, int length, int width, int height, float * buf )
 {
@@ -198,21 +215,23 @@ void write_my_single_cube( const char* filehead, int length, int width, int heig
 	FILE * fp = fopen( filename.c_str(), "wb" ) ;
  
 	if( !fp ) 
-	{
 		throw ErrnoError( filename ) ;
-	}
 	else
 	{
-		int cube_size = length * width * height ;
-		if( (int) fwrite( buf, sizeof(float), cube_size, fp ) != cube_size )
-		{
-			throw WriteDataError( filename ) ;	
+		int index = 0 ;
+		float* pbuf = buf ;
+
+		while (index < length * width * height) {
+
+			if (!fwrite (pbuf++, sizeof (float), 1, fp))
+				throw WriteDataError (std::string(filename)) ;
+				
+			index ++ ;
 		}
+
 		fclose( fp ) ;
 	}
 }
-
-
 
 void write_my_double_cube( const char* filehead, int length, int width, int height, double * buf )
 {
@@ -222,16 +241,20 @@ void write_my_double_cube( const char* filehead, int length, int width, int heig
 	FILE * fp = fopen( filename.c_str(), "wb" ) ;
   	
 	if( !fp ) 
-	{
 		throw ErrnoError( filename ) ;
-	}
 	else
 	{
-		int cube_size = length * width * height ;
-		if( (int) fwrite( buf, sizeof(double), cube_size, fp ) != cube_size )
-		{
-			throw WriteDataError( filename ) ;	
+		int index = 0 ;
+		double* pbuf = buf ;
+
+		while (index < length * width * height) {
+
+			if (!fwrite (pbuf++, sizeof (double), 1, fp))
+				throw WriteDataError (std::string(filename)) ;
+				
+			index ++ ;
 		}
+
 		fclose( fp ) ;
 	}
 }

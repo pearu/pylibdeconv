@@ -118,7 +118,7 @@ class CCube {
 	
 	
 	public:
-	typedef boost::shared_array< T >  DataArray ;
+//	typedef boost::shared_array< T >  DataArray ;
 	
 	
 	/*
@@ -154,10 +154,13 @@ class CCube {
 		_length = cube.length() ;
 		_width  = cube.width()  ;
 		_height = cube.height() ;
-		if( _data ) _data.reset() ;
-		
-		DataArray temp( new T[ _length * _width * _height ] ) ;
-		_data = temp ;
+//		if( _data ) _data.reset() ;
+
+		if (_data)
+			fftw_free(_data) ;
+			
+//		DataArray temp( new T[ _length * _width * _height ] ) ;
+		_data = (T*)fftw_malloc (sizeof(T) *_length * _width * _height);
 
 		for( int i = 0 ; i < _length * _width * _height ; i++ )
 		{
@@ -207,17 +210,16 @@ class CCube {
 			_length = length ;
 			_width  = width ;
 			_height = height ;
-			if( _data ) _data.reset() ;
+			
+			if( _data )
+				fftw_free(_data) ;
 
-			if( data == NULL )
+			_data = (T*)fftw_malloc (sizeof(T) *_length * _width * _height);
+							
+			if (data)
 			{
-				DataArray temp( new T[ length * width * height ] ) ;
-				_data = temp ;
-			}
-			else
-			{
-				DataArray temp( new T[ length * width * height ] ) ;
-				_data = temp ;
+//				DataArray temp( new T[ length * width * height ] ) ;
+//				_data = temp ;
 				for( int i = 0 ; i < length * width * height ; i++ )
 				{
 					_data[i] = data[i] ;
@@ -229,6 +231,7 @@ class CCube {
 			_length = 0 ;
 			_width  = 0 ;
 			_height = 0 ;
+			_data = NULL ;
 		}	
 		else 
 		{
@@ -253,7 +256,7 @@ class CCube {
                 
 		if( !ret && throw_if_not ) 
 		{
-			throw CubeError( _length, _width, _height, _data.get() ) ;
+			throw CubeError( _length, _width, _height, _data ) ;
 		}
                 
 		return ret ;
@@ -270,7 +273,9 @@ class CCube {
 			_length = 0 ;
 			_width  = 0 ;
 			_height = 0 ;
-			_data.reset() ;
+			fftw_free(_data) ;
+			_data = NULL ;
+//			_data.reset() ;
 		}
 	}
 
@@ -287,7 +292,7 @@ class CCube {
   	int	width   () const                   { return _width  ;                                   }
   	int	height  () const                   { return _height ;                                   }
 	int	size    () const                   { return ( _length * _width * _height ) ;            }
-  	T*	data    () const                   { return _data.get() ;                               }
+  	T*	data    () const                   { return _data ;                               }
   	
   	
   	/*
@@ -591,9 +596,10 @@ class CCube {
 	int        _length ;
 	int        _width  ;
 	int        _height ;	
-	DataArray  _data ;
+	T*  	   _data ;
   	
-	void _init( int length, int width, int height, DataArray data )
+//	void _init( int length, int width, int height, DataArray data )
+	void _init( int length, int width, int height, T* data )
 	{
 		_length = length ;
 		_width  = width ;
@@ -860,7 +866,8 @@ int CCube<T>::length_crop( int index0, int index1 )
 		else
 		{
 			int length = index1 - index0 + 1 ;
-			DataArray buf( new T [ length * _width * _height ] ) ;			
+			T* buf = (T*)fftw_malloc (sizeof(T) * _length * _width * _height) ;
+//			DataArray buf( new T [ length * _width * _height ] ) ;			
 
 			for( int k = 0 ; k < _height ; k++ )
 				for( int j = 0 ; j < _width ; j++ )
@@ -869,6 +876,7 @@ int CCube<T>::length_crop( int index0, int index1 )
 						= _data[ k*_width*_length + j*_length + i+index0 ] ;  	    	 
 
 			_init( length, _width, _height, buf ) ;
+			fftw_free (buf) ;
 
 			return 0 ;
 		}
@@ -893,7 +901,8 @@ int CCube<T>::width_crop( int index0, int index1 )
 		else
 		{
 			int width = index1 - index0 + 1 ;
-			DataArray buf( new T [ _length * width * _height ] ) ;
+			T* buf = (T*)fftw_malloc (sizeof(T) * _length * _width * _height) ;
+//			DataArray buf( new T [ _length * width * _height ] ) ;
 
 			for( int k = 0 ; k < _height ; k++ )	  	  
 				for( int j = 0 ; j < width ; j++ )
@@ -902,6 +911,7 @@ int CCube<T>::width_crop( int index0, int index1 )
 						= _data[ k*_width*_length + (j+index0)*_length + i ] ;
 
 			_init( _length, width, _height, buf ) ;
+			fftw_free (buf) ;
 
 			return 0 ;
 		}
@@ -926,7 +936,8 @@ int CCube<T>::height_crop( int index0, int index1 )
 		else
 		{
 			int height = index1 - index0 + 1 ;  
-			DataArray buf( new T [ _length * _width * height ] ) ;
+			T* buf = (T*)fftw_malloc (sizeof(T) * _length * _width * _height) ;
+//			DataArray buf( new T [ _length * _width * height ] ) ;
 
 			for( int k = 0 ; k < height ; ++k )	  	  
 				for( int j = 0 ; j < _width ; ++j )
@@ -935,6 +946,7 @@ int CCube<T>::height_crop( int index0, int index1 )
 						= _data[ (k+index0)*_width*_length + j*_length + i ] ;
 
 			_init( _length, _width, height, buf ) ;
+			fftw_free (buf) ;
 
 			return 0 ;
 		}
@@ -958,7 +970,8 @@ int CCube<T>::length_pad( int num0, int num1, T value )
 		else
 		{
 			int length = num1 + num0 + _length ;
-			DataArray buf( new T [ length * _width * _height ] ) ;
+			T* buf = (T*)fftw_malloc (sizeof(T) * _length * _width * _height) ;
+//			DataArray buf( new T [ length * _width * _height ] ) ;
 			for( int i = 0 ; i < length * _width * _height ; i++ ) buf[i] = value ;
 
 			for( int k = 0 ; k < _height ; ++k )	  	  
@@ -968,7 +981,7 @@ int CCube<T>::length_pad( int num0, int num1, T value )
 						= _data[ k*_width*_length + j*_length + i ] ;
 
 			_init( length, _width, _height, buf ) ;
-
+			fftw_free (buf) ;
 			return 0 ;
 		}
 	}
@@ -991,7 +1004,8 @@ int CCube<T>::width_pad(int num0, int num1, T value)
 		else
 		{
 			int width = num1 + num0 + _width ;
-			DataArray buf( new T [ _length * width * _height ] ) ;
+			T* buf = (T*)fftw_malloc (sizeof(T) * _length * _width * _height) ;
+//			DataArray buf( new T [ _length * width * _height ] ) ;
 			for( int i = 0 ; i < _length * width * _height ; i++ ) buf[i] = value ;
 
 			for( int k = 0 ; k < _height ; ++k )	  	  
@@ -1024,7 +1038,8 @@ int CCube<T>::height_pad(int num0, int num1, T value)
 		else
 		{
 			int height = num1 + num0 + _height ;
-			DataArray buf( new T [ _length * _width * height ] ) ;
+			T* buf = (T*)fftw_malloc (sizeof(T) * _length * _width * _height) ;
+//			DataArray buf( new T [ _length * _width * height ] ) ;
 			for( int i = 0 ; i < _length * _width * height ; i++ ) buf[i] = value ;
 
 			for( int k = 0 ; k < _height ; ++k )	  	  

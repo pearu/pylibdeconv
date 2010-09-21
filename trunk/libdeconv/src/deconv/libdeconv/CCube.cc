@@ -22,8 +22,6 @@
 #include "MYcube.h"
 #include "CCube.h"
 
-
-
 template<> int CCube< unsigned char >::read( const char * filename )
 {
 	int length, width, height, cube_size ;
@@ -37,7 +35,7 @@ template<> int CCube< unsigned char >::read( const char * filename )
 		read_my_cube_hdr( filehead, length, width, height ) ;
 		cube_size = length * width * height ;	
 		init( length, width, height ) ;
-		read_my_byte_cube_data( filename, cube_size, _data.get() ) ;
+		read_my_byte_cube_data( filename, cube_size, _data ) ;
 		return 1 ;
 	}
 	else
@@ -64,14 +62,16 @@ template<> int CCube< unsigned short >::read( const char * filename )
 		init( length, width, height ) ;	
 		if( suffix == std::string( "u8" ) )
 		{
-			ByteArray buf( new unsigned char[ cube_size ] ) ;
-			read_my_byte_cube_data( filename, cube_size, buf.get() ) ;
+			unsigned char* buf = (unsigned char*)fftw_malloc (cube_size * sizeof(unsigned char)) ;
+//			ByteArray buf( new unsigned char[ cube_size ] ) ;
+			read_my_byte_cube_data( filename, cube_size, buf) ;
 			for( int i = 0 ; i < cube_size ; i++ ) _data[i] = (unsigned short) buf[i] ;
+			fftw_free (buf) ;
 			return 1 ;
 		}
 		else
 		{
-			read_my_short_cube_data( filename, cube_size, _data.get() ) ;
+			read_my_short_cube_data( filename, cube_size, _data ) ;
 			return 2 ;
 		}
 	}
@@ -99,16 +99,20 @@ template<> int CCube< int >::read( const char * filename )
 		init( length, width, height ) ;		
 		if( suffix == std::string( "u8" ) )
 		{
-			ByteArray buf( new unsigned char[ cube_size ] ) ;
-			read_my_byte_cube_data( filename, cube_size, buf.get() ) ;
+			unsigned char* buf = (unsigned char*)fftw_malloc (cube_size * sizeof (unsigned char)) ;
+//			ByteArray buf( new unsigned char[ cube_size ] ) ;
+			read_my_byte_cube_data( filename, cube_size, buf) ;
 			for( int i = 0 ; i < cube_size ; i++ ) _data[i] = (int) buf[i] ;
+			fftw_free (buf) ;
 			return 1 ;
 		}
 		else
 		{
-			ShortArray buf( new unsigned short[ cube_size ] ) ;
-			read_my_short_cube_data( filename, cube_size, buf.get() ) ;
+			unsigned short* buf = (unsigned short*)fftw_malloc (cube_size * sizeof (unsigned short)) ;
+//			ShortArray buf( new unsigned short[ cube_size ] ) ;
+			read_my_short_cube_data( filename, cube_size, buf ) ;
 			for( int i = 0 ; i < cube_size ; i++ ) _data[i] = (int) buf[i] ;
+			fftw_free (buf) ;
 			return 2 ;
 		}
 	}
@@ -138,22 +142,26 @@ template<> int CCube< float >::read( const char * filename )
 		{
 			if( suffix == std::string( "u8" ) )
 			{
-				ByteArray buf( new unsigned char[ cube_size ] ) ;
-				read_my_byte_cube_data( filename, cube_size, buf.get() ) ;
+				unsigned char* buf = (unsigned char*)fftw_malloc (cube_size * sizeof (unsigned short)) ;
+//				ByteArray buf( new unsigned char[ cube_size ] ) ;
+				read_my_byte_cube_data( filename, cube_size, buf ) ;
 				for( int i = 0 ; i < cube_size ; i++ ) _data[i] = (float) buf[i] ;
+				fftw_free (buf) ;
 				return 1 ;
 			}
 			else
 			{
-				ShortArray buf( new unsigned short[ cube_size ] ) ;
-				read_my_short_cube_data( filename, cube_size, buf.get() ) ;
+				unsigned short* buf = (unsigned short*)fftw_malloc (cube_size * sizeof (unsigned short)) ;				
+//				ShortArray buf( new unsigned short[ cube_size ] ) ;
+				read_my_short_cube_data( filename, cube_size, buf) ;
 				for( int i = 0 ; i < cube_size ; i++ ) _data[i] = (float) buf[i] ;
+				fftw_free (buf) ;
 				return 2 ;
 			}
 		}
 		else
 		{
-			read_my_single_cube_data( filename, cube_size, _data.get() ) ;
+			read_my_single_cube_data( filename, cube_size, _data ) ;
 			return 3 ;
 		}
 	}
@@ -184,29 +192,35 @@ template<> int CCube< double >::read( const char * filename )
 		{ 		
 			if( suffix == std::string( "u8" ) )
 			{
-				ByteArray buf( new unsigned char[ cube_size ] ) ;
-				read_my_byte_cube_data( filename, cube_size, buf.get() ) ;
+				unsigned char* buf = (unsigned char*)fftw_malloc (cube_size * sizeof (unsigned char)) ;
+//				ByteArray buf( new unsigned char[ cube_size ] ) ;
+				read_my_byte_cube_data( filename, cube_size, buf ) ;
 				for( int i = 0 ; i < cube_size ; i++ ) _data[i] = (double) buf[i] ;
+				fftw_free (buf) ;
 				return 1 ;
 			}
 			else if( suffix == std::string( "i16" ) )
 			{
-				ShortArray buf( new unsigned short[ cube_size ] ) ;
-				read_my_short_cube_data( filename, cube_size, buf.get() ) ;
+				unsigned short* buf = (unsigned short*)fftw_malloc (cube_size * sizeof (unsigned short)) ;
+//				ShortArray buf( new unsigned short[ cube_size ] ) ;
+				read_my_short_cube_data( filename, cube_size, buf ) ;
 				for( int i = 0 ; i < cube_size ; i++ ) _data[i] = (double) buf[i] ;
+				fftw_free (buf) ;
 				return 2 ;
 			}
 			else
 			{
-				SingleArray buf( new float[ cube_size ] ) ;
-				read_my_single_cube_data( filename, cube_size, buf.get() ) ;
+				float* buf = (float*)fftw_malloc (cube_size * sizeof (float)) ;
+//				SingleArray buf( new float[ cube_size ] ) ;
+				read_my_single_cube_data( filename, cube_size, buf ) ;
 				for( int i = 0 ; i < cube_size ; i++ ) _data[i] = (double) buf[i] ;
+				fftw_free (buf) ;
 				return 3 ;
 			}
 		}
 		else
 		{
-			read_my_double_cube_data( filename, cube_size, _data.get() ) ;
+			read_my_double_cube_data( filename, cube_size, _data ) ;
 			return 4 ;
 		}
 	}
@@ -223,7 +237,7 @@ template<> void CCube< unsigned char >::write( const char * filehead )
 {
 	if( Valid( true ) ) 
 	{
-		write_my_byte_cube( filehead, _length, _width, _height, _data.get() ) ;
+		write_my_byte_cube( filehead, _length, _width, _height, _data ) ;
 	}
 }
 
@@ -233,7 +247,7 @@ template<> void CCube< unsigned short >::write( const char * filehead )
 {
 	if( Valid( true ) ) 
 	{
-		write_my_short_cube( filehead, _length, _width, _height, _data.get() ) ;
+		write_my_short_cube( filehead, _length, _width, _height, _data ) ;
 	}
 }
 
@@ -243,7 +257,7 @@ template<> void CCube< float >::write( const char * filehead )
 {
 	if( Valid( true ) ) 
 	{
-		write_my_single_cube( filehead, _length, _width, _height, _data.get() ) ;
+		write_my_single_cube( filehead, _length, _width, _height, _data ) ;
 	}
 }
 
@@ -253,6 +267,6 @@ template<> void CCube< double >::write( const char * filehead )
 {
 	if( Valid( true ) ) 
 	{
-		write_my_double_cube( filehead, _length, _width, _height, _data.get() ) ;
+		write_my_double_cube( filehead, _length, _width, _height, _data ) ;
 	}
 }

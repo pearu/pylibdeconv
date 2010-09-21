@@ -31,8 +31,8 @@
 #include <dirent.h>
 #include <vector>
 #include <GL/glut.h>
-#include "deconv/CCube.h"
-#include "deconv/FFTW3fft.h"
+#include "libdeconv/CCube.h"
+#include "libdeconv/FFTW3fft.h"
 #include "gnuplot_i.h"
 #include "ViewerUtils.h"
 
@@ -42,7 +42,7 @@
 
 
 static int MainWindowID = 0 ;
-static ByteArray pixels ;
+static unsigned char* pixels ;
 
 static gnuplot_ctrl * PlotWindow ;
 static bool plot_refresh_on = true ;
@@ -93,12 +93,14 @@ void gnu_plot_data( double * data, int ndata, char * title )
 		else throw ErrnoError( filename ) ;
 	}
 
-	DoubleArray index( new double[ndata] ) ;
+	double* index = new double[ndata] ;
+//	DoubleArray index( new double[ndata] ) ;
 	for ( int i = 0 ; i < ndata ; i++ ) index[i] = (double) i ;
 
 	if( plot_refresh_on ) gnuplot_resetplot( PlotWindow ) ;
 	gnuplot_setstyle( PlotWindow, "lines" ) ;
-	gnuplot_plot_xy( PlotWindow, index.get(), data, ndata, title ) ;
+	gnuplot_plot_xy( PlotWindow, index, data, ndata, title ) ;
+	delete [] index;
 }
 
 
@@ -306,7 +308,7 @@ void display( void )
 	glClear( GL_COLOR_BUFFER_BIT ) ;
 	glRasterPos2i( 0, ImageHeight-1 ) ;
 	glPixelZoom( 1.0, -1.0 ) ;
-	glDrawPixels( ImageWidth, ImageHeight, GL_RGB, GL_UNSIGNED_BYTE, pixels.get() ) ;
+	glDrawPixels( ImageWidth, ImageHeight, GL_RGB, GL_UNSIGNED_BYTE, pixels ) ;
 	if( DisplayFrameWindow )
 	{
 		glColor3f( 1.0, 0.0, 0.0 ) ;
@@ -450,7 +452,7 @@ void plotMenuFunc( int choice )
 	{
 		case 1:
 		{
-			DoubleArray data( new double[ ndata ] ) ;
+			double* data = new double[ ndata ] ;
 			for( int i = 0 ; i < ndata ; i++ )        data[i] = 0.0 ;    			
 			for( int i = 0 ; i < image.size() ; i++ ) data[ (int) (image.data())[i] ]++ ;
 			for( int i = 0 ; i < ndata ; i++ )
@@ -466,7 +468,8 @@ void plotMenuFunc( int choice )
 			std::cout << " Indicate whether removing(1) the peak or not(0) to plot data <<<< " ;
 			std::cin  >> remove_peak ;
 			if( remove_peak ) data[ maxindex ] = 0.0 ;
-			gnu_plot_data( data.get(), ndata, CurImageName ) ;
+			gnu_plot_data( data, ndata, CurImageName ) ;
+			delete [] data ;
 			break ;
 		}
 
@@ -474,7 +477,7 @@ void plotMenuFunc( int choice )
 		{
 			if( FrameBottomY > FrameTopY && FrameRightX > FrameLeftX )
 			{
-				DoubleArray data( new double[ ndata ] ) ;
+				double* data = new double[ ndata ] ;
 				for( int i = 0 ; i < ndata ; i++ )        data[i] = 0.0 ; 
 				for( int i = 0 ; i < frame.size() ; i++ ) data[ (int) (frame.data())[i] ]++ ;
 				for( int i = 0 ; i < ndata ; i++ )
@@ -490,16 +493,18 @@ void plotMenuFunc( int choice )
 				std::cout << " Indicate whether removing(1) the peak or not(0) to plot data <<<< " ;
 				std::cin  >> remove_peak ;
 				if( remove_peak ) data[ maxindex ] = 0.0 ;
-				gnu_plot_data( data.get(), ndata, CurImageName ) ;
+				gnu_plot_data( data, ndata, CurImageName ) ;
+				delete [] data ;
 			}
 			else 	std::cout << " SubImage has not been set up yet.\n" ;
+			
 			break ;
 		}
 		
 		case 3:
 		{
 			DoubleSlice dslice( ImageWidth, ImageHeight ) ;
-			DoubleArray data( new double[ image_name.size() ] ) ;
+			double* data = new double[ image_name.size() ] ;
 			for( int k = 0 ; k < ((int) image_name.size()) ; k++ ) 
 			{
 				data[k] = 0.0 ;
@@ -520,7 +525,8 @@ void plotMenuFunc( int choice )
 			}
 			std::cout << "Sectioning is Focused at "<< image_name[ maxindex ] << " : " << maxdata << "\n" ;
 			sprintf( title, "Focus along Sectioning Images" ) ;
-			gnu_plot_data( data.get(), image_name.size(), title ) ;
+			gnu_plot_data( data, image_name.size(), title ) ;
+			delete [] data ;
 			break;
 		}
 		
@@ -529,7 +535,7 @@ void plotMenuFunc( int choice )
 			if( FrameBottomY > FrameTopY && FrameRightX > FrameLeftX )
 			{
 				DoubleSlice dslice( ImageWidth, ImageHeight ) ;
-				DoubleArray data( new double[ image_name.size() ] ) ;
+				double* data = new double[ image_name.size() ] ;
 				for( int k = 0 ; k < ((int) image_name.size()) ; k++ ) 
 				{
 					data[k] = 0.0 ;
@@ -551,7 +557,8 @@ void plotMenuFunc( int choice )
 				}
 				std::cout << "SubImage Sectioning is Focused at "<< image_name[ maxindex ] << " : " << maxdata << "\n" ;
 				sprintf( title, "Focus_along_Sectioning_SubImages_%d_%d_%d_%d", FrameLeftX, FrameRightX, FrameTopY, FrameBottomY ) ;
-				gnu_plot_data( data.get(), image_name.size(), title ) ;
+				gnu_plot_data( data, image_name.size(), title ) ;
+				delete [] data ;
 			}
 			else 	std::cout << " SubImage has not been set up yet.\n" ;
 			break ;
@@ -742,8 +749,7 @@ int main(int argc, char** argv)
 		CurImageID = (int) ((floor) (image_name.size() / 2)) ;
 		IntensityWindow = (double) MaxIntensity ;
 		IntensityCenter = IntensityWindow / 2.0 ;
-		ByteArray temp_pixels( new unsigned char[ ImageSize * 3 ] ) ;
-		pixels = temp_pixels ;
+		pixels = new unsigned char [ ImageSize * 3 ] ;
 		PlotWindow = gnuplot_init() ;
 		initImage() ;
 		initDisplay() ;
@@ -798,6 +804,7 @@ int main(int argc, char** argv)
 		std::cout << " No " << images_setname << "* images found.\n" ;  
 		return 1 ;
 	}
-  	
+
+	delete [] pixels ;
 	return 0 ;
 }

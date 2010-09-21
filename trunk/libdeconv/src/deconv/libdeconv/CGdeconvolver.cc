@@ -23,7 +23,26 @@
 #include "CGdeconvolver.h"
 
 
+CGdeconvolver::CGdeconvolver()
+{ 
+	init() ; 
+}
+
 /* public functions */
+CGdeconvolver::~CGdeconvolver()
+{
+	if (_FFTplanf)
+		delete _FFTplanf ;
+
+	if (_FFTplanff)
+		delete _FFTplanff ;
+		
+	if (_FFTplanb)
+		delete _FFTplanb ;
+
+	if (_FFTplanbb)
+		delete _FFTplanbb ;
+}
 
 void CGdeconvolver::init( bool IsApplyIR, bool IsApplyNorm, bool IsTrackLike, bool IsTrackMax, bool IsCheckStatus )
 {
@@ -48,8 +67,6 @@ void CGdeconvolver::init( bool IsApplyIR, bool IsApplyNorm, bool IsTrackLike, bo
 	_Space = 0 ;
 }
 
-
-
 void CGdeconvolver::exportCG( const char * filename )
 {
 	FILE * fp = fopen( filename, "a+" ) ;
@@ -73,8 +90,6 @@ void CGdeconvolver::exportCG( const char * filename )
 		throw ErrnoError( std::string(filename) ) ;
 	}
 }
-
-
 
 void CGdeconvolver::run( int DimX, int DimY, int DimZ, double * cgr, double * cgp, double * object, 
                          CGdws & ws, unsigned char * SpacialSupport, unsigned char * FrequencySupport )
@@ -175,8 +190,6 @@ void CGdeconvolver::run( int DimX, int DimY, int DimZ, double * cgr, double * cg
 	/* end deconvolution */
 	_CGfinishRun( ws ) ;	
 }
-
-
 
 void CGdeconvolver::run( int DimX, int DimY, int DimZ, float * cgr, float * cgp, float * object, 
                          CGsws & ws, unsigned char * SpacialSupport, unsigned char * FrequencySupport )
@@ -279,8 +292,6 @@ void CGdeconvolver::run( int DimX, int DimY, int DimZ, float * cgr, float * cgp,
 	_CGfinishRun( ws ) ;	
 }
 
-
-
 /* private functions */
 
 void CGdeconvolver::_CGprintStatus( int stage )
@@ -362,8 +373,6 @@ void CGdeconvolver::_CGprintStatus( int stage )
 	}
 }
 
-
-
 void CGdeconvolver::_CGstartRun( int DimX, int DimY, int DimZ, CGdws & ws )
 {
 	_setDimensions( DimX, DimY, DimZ ) ;
@@ -378,19 +387,15 @@ void CGdeconvolver::_CGstartRun( int DimX, int DimY, int DimZ, CGdws & ws )
 	time( &_t0 ) ;
 	std::cout << " CGdeconvolver::run starts creating FFT plans ... \n" ;
         	
-	FFTW3_FFT::Ptr tempff( new FFTW3_FFT( _DimX, _DimY, _DimZ, true,  true, 3 ) ) ;
-	_FFTplanff = tempff ;
+	_FFTplanff = new FFTW3_FFT (_DimX, _DimY, _DimZ, true,  true, 3) ;
 	
-	FFTW3_FFT::Ptr tempbb( new FFTW3_FFT( _DimX, _DimY, _DimZ, false, true, 3 ) ) ;
-	_FFTplanbb = tempbb ;
+	_FFTplanbb = new FFTW3_FFT (_DimX, _DimY, _DimZ, false, true, 3) ;
         	
 	if( _ConditioningIteration > 0 )
 	{
-		FFTW3_FFT::Ptr tempf( new FFTW3_FFT( _DimX, _DimY, _DimZ, true,  true, 1 ) ) ;
-		_FFTplanf = tempf ;
+		_FFTplanf = new FFTW3_FFT (_DimX, _DimY, _DimZ, true,  true, 1) ;
 	
-		FFTW3_FFT::Ptr tempb( new FFTW3_FFT( _DimX, _DimY, _DimZ, false, true, 2 ) ) ;
-		_FFTplanb = tempb ;
+		_FFTplanb = new FFTW3_FFT (_DimX, _DimY, _DimZ, false, true, 2) ;
 	}
 		
 	time( &_t1 ) ;
@@ -408,6 +413,7 @@ void CGdeconvolver::_CGstartRun( int DimX, int DimY, int DimZ, CGdws & ws )
 	ws.cg_re    = new double[ ws.size ] ;
 	ws.cg_im    = new double[ ws.size ] ;
 	ws.sign     = new unsigned char[ _Space ] ;
+
 	if( _ConditioningIteration > 0 )
 	{
 		ws.object0 = new double[ _Space ] ;
@@ -421,8 +427,6 @@ void CGdeconvolver::_CGstartRun( int DimX, int DimY, int DimZ, CGdws & ws )
 	
 	std::cout << " CGdeconvolver::run are using " << (memory/1024.0/128.0) << " Mbytes memory.\n" ;
 }
-
-
 
 void CGdeconvolver::_CGstartRun( int DimX, int DimY, int DimZ, CGsws & ws )
 {
@@ -438,19 +442,13 @@ void CGdeconvolver::_CGstartRun( int DimX, int DimY, int DimZ, CGsws & ws )
 	time( &_t0 ) ;
 	std::cout << " CGdeconvolver::run starts creating FFT plans ... \n" ;
         	
-	FFTW3_FFT::Ptr tempff( new FFTW3_FFT( _DimX, _DimY, _DimZ, true,  false, 3 ) ) ;
-	_FFTplanff = tempff ;
-	
-	FFTW3_FFT::Ptr tempbb( new FFTW3_FFT( _DimX, _DimY, _DimZ, false, false, 3 ) ) ;
-	_FFTplanbb = tempbb ;
+	_FFTplanff = new FFTW3_FFT (_DimX, _DimY, _DimZ, true, false, 3) ;
+	_FFTplanbb = new FFTW3_FFT (_DimX, _DimY, _DimZ, false, false, 3) ;
 		
 	if( _ConditioningIteration > 0 )
 	{
-		FFTW3_FFT::Ptr tempf( new FFTW3_FFT( _DimX, _DimY, _DimZ, true,  false, 1 ) ) ;
-		_FFTplanf = tempf ;
-	
-		FFTW3_FFT::Ptr tempb( new FFTW3_FFT( _DimX, _DimY, _DimZ, false, false, 2 ) ) ;
-		_FFTplanb = tempb ;
+		_FFTplanf = new FFTW3_FFT (_DimX, _DimY, _DimZ, true,  false, 1) ;
+		_FFTplanb = new FFTW3_FFT (_DimX, _DimY, _DimZ, false, false, 2) ;
 	}
 		
 	time( &_t1 ) ;

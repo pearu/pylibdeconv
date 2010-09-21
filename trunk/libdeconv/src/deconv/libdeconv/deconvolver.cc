@@ -118,8 +118,6 @@ void deconvolver::_exportCommon( FILE * fp )
 	
 }
 
- 
-
 void deconvolver::_setDimensions( int DimX, int DimY, int DimZ )
 {
 	if( DimX > 0 && _IsPowerOf2(DimX) && DimY > 0 && _IsPowerOf2(DimY) && DimZ > 0 && _IsPowerOf2(DimZ)  )
@@ -132,8 +130,6 @@ void deconvolver::_setDimensions( int DimX, int DimY, int DimZ )
 	else	throw DimensionError( DimX, DimY, DimZ ) ;
 }
 
-
-
 void deconvolver::_setControlFlags(  bool IsCheck, bool IsApply, bool IsTrackMax, bool IsTrackLike )
 {
 	_CheckStatus        = IsCheck ;
@@ -144,8 +140,6 @@ void deconvolver::_setControlFlags(  bool IsCheck, bool IsApply, bool IsTrackMax
 	_ApplySpacialSupport = false ;
 	_ApplyFrequencySupport = false ;
 }
-
-
 
 void deconvolver::_initPSF( int size, double * psf, double * psf_re, double * psf_im, unsigned char * FrequencySupport, double * otf )
 {
@@ -170,8 +164,6 @@ void deconvolver::_initPSF( int size, double * psf, double * psf_re, double * ps
 	}
 }
 
-
-
 void deconvolver::_initPSF( int size, float * psf, float * psf_re, float * psf_im, unsigned char * FrequencySupport, float * otf )
 {
 	fft3d( _DimX, _DimY, _DimZ, psf, psf_re, psf_im ) ;
@@ -195,8 +187,6 @@ void deconvolver::_initPSF( int size, float * psf, float * psf_re, float * psf_i
 	}	
 }
 
-
-
 void deconvolver::_initIMG( double & max_intensity, double * image, double * object, unsigned char * SpacialSupport )
 {
 	if( SpacialSupport != NULL ) _ApplySpacialSupport = true ;
@@ -219,8 +209,6 @@ void deconvolver::_initIMG( double & max_intensity, double * image, double * obj
 	}
 }
 
-
-
 void deconvolver::_initIMG( float & max_intensity, float * image, float * object, unsigned char * SpacialSupport )
 {
 	if( SpacialSupport != NULL ) _ApplySpacialSupport = true ;
@@ -242,8 +230,6 @@ void deconvolver::_initIMG( float & max_intensity, float * image, float * object
 		for( int i = 0 ; i < _Space ; i++ ) image[i] /= max_intensity ;
 	}
 }
-
-
 
 void deconvolver::_getUpdate( double * object, double * last_object, unsigned char * SpacialSupport )
 {
@@ -281,8 +267,6 @@ void deconvolver::_getUpdate( double * object, double * last_object, unsigned ch
 	_Update.push_back( (temp1/temp2) ) ;
 }
 
-       
-        
 void deconvolver::_getUpdate( float * object, float * last_object, unsigned char * SpacialSupport )
 {
 	if( SpacialSupport != NULL )
@@ -314,6 +298,5 @@ void deconvolver::_getUpdate( float * object, float * last_object, unsigned char
 		temp1 += ( object[i] - last_object[i] )* ( object[i] - last_object[i] ) ;
 		temp2 += ( object[i] * object[i] ) ;
 	}
-
 	_Update.push_back( (temp1/temp2) ) ;
 }

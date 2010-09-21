@@ -125,18 +125,9 @@ typedef struct
                
 class LWdeconvolver : public LWCGdeconvolver
 {
-	public:
-	typedef boost::shared_ptr< LWdeconvolver > Ptr ;
-	
-	virtual ~LWdeconvolver() {}
-
-	
-	/*
-	 *	Constructor
-	 */
-	LWdeconvolver() { init() ; }
-
-
+ public:
+	LWdeconvolver() ;
+	virtual ~LWdeconvolver() ;
 	/*
 	 *	Set up the control flags and default parameters used for LWdeconvolver
 	 *	Input:

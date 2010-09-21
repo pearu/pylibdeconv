@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <time.h>
 #include <vector>
-#include "MYdef.h"
 #include "MYerror.h"
 
 
@@ -104,13 +103,12 @@ class DimensionError : public Error
 		       << " , DimY = " << DimY << " , DimZ = " << DimZ << ".\n" ; 
 	}
 } ;
-  
- 
-		                 
+  	                 
 class deconvolver
 {
-	public:
+ public:
 	virtual ~deconvolver() {}
+	deconvolver() {}
 	
 	
 	/*

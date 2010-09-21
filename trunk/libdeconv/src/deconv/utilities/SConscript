@@ -12,11 +12,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 #
-# Author:    Yuansheng Sun  yuansheng-sun@uiowa.edu
-# Copyright: University of Iowa 2006
-#
-# Filename:  SConscript
-#
 
 Import( 'env' )
 env = env.Clone()
@@ -35,7 +30,7 @@ deconvEMlik = env.Program( 'deconvEMlik', 'deconvEMlik.cc' )
 env.Alias('install', env.Install( env['BIN_DIR'], deconv3Dpsf ))
 env.Alias('install', env.Install( env['BIN_DIR'], deconvRZpsf ))
 env.Alias('install', env.Install( env['BIN_DIR'], deconvRZpsf_3Dpsf ))
-env.Alias('install', env.Install( env['BIN_DIR'], deconvLW ))
-env.Alias('install', env.Install( env['BIN_DIR'], deconvCG ))
 env.Alias('install', env.Install( env['BIN_DIR'], deconvEM ))
+env.Alias('install', env.Install( env['BIN_DIR'], deconvCG ))
+env.Alias('install', env.Install( env['BIN_DIR'], deconvLW ))
 env.Alias('install', env.Install( env['BIN_DIR'], deconvEMlik ))

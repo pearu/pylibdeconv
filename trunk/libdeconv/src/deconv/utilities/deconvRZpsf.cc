@@ -20,7 +20,8 @@
 
 
 #include <stdlib.h>
-#include "deconv/FluoRZPSF.h"
+#include <stdio.h>
+#include "libdeconv/FluoRZPSF.h"
 
 
 /*

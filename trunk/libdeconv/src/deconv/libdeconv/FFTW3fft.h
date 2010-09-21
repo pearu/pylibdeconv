@@ -23,7 +23,6 @@
 #define FFTW3FFT_H
 
 
-#include <boost/shared_ptr.hpp>
 #include <fftw3.h>
 
 
@@ -65,7 +64,6 @@
 class FFTW3_FFT
 {
 	public:
-	typedef boost::shared_ptr< FFTW3_FFT > Ptr ;
 
 	~FFTW3_FFT() ;
 
@@ -94,6 +92,12 @@ class FFTW3_FFT
 	double      _weight ;
 	fftw_plan   _dplan ;
 	fftwf_plan  _splan ;
+	float* 		_fbuf1 ;
+	float* 		_fbuf2 ;
+	float* 		_fbuf3 ;
+	double*		_dbuf1 ;
+	double*		_dbuf2 ;
+	double*		_dbuf3 ;
 } ;
 
 
@@ -115,8 +119,6 @@ class FFTW3_FFT
 */
 void fft3d( int DimX, int DimY, int DimZ, double * in, double * out_re, double * out_im ) ;
 void fft3d( int DimX, int DimY, int DimZ, float  * in, float  * out_re, float  * out_im ) ;
-
-
 
 /* 
 	The following functions provide 1D/2D/3D FFT routines developped based on FFTW3.

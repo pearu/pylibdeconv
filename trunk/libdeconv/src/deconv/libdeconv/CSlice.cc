@@ -31,7 +31,7 @@ template<> int CSlice< unsigned char >::read( const char * filename )
 	if( greylevel < 256 )
 	{
 		init( width, height ) ;
-		read_my_byte_image_data( filename, width*height, _data.get() ) ;
+		read_my_byte_image_data( filename, width*height, _data ) ;
 		return 255 ;
 	}
 	else
@@ -48,7 +48,7 @@ template<> void CSlice< unsigned char >::write( const char* filehead )
 {
 	if( Valid( true ) )
 	{
-		 write_my_byte_image( filehead, _width, _height, 255, _data.get() ) ;  
+		 write_my_byte_image( filehead, _width, _height, 255, _data ) ;  
 	}
 }
 
@@ -58,6 +58,6 @@ template<> void CSlice< unsigned short >::write( const char* filehead )
 {
 	if( Valid( true ) )
 	{
-		 write_my_short_image( filehead, _width, _height, 65535, _data.get() ) ;  
+		 write_my_short_image( filehead, _width, _height, 65535, _data) ;  
 	}
 }

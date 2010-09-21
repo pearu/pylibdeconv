@@ -22,6 +22,19 @@
 #include <math.h>
 #include "EMdeconvolver.h"
 
+EMdeconvolver::EMdeconvolver() :deconvolver()
+{ 
+	init() ; 
+}		
+
+EMdeconvolver::~EMdeconvolver()
+{
+	if (_FFTplanf)
+		delete _FFTplanf ;
+		
+	if (_FFTplanb)
+		delete _FFTplanb ;
+}
 
 /* public functions */
 
@@ -336,11 +349,8 @@ void EMdeconvolver::_EMstartRun( int DimX, int DimY, int DimZ, EMdws & ws )
 	time( &_t0 ) ;
 	std::cout << " EMdeconvolver::run starts creating FFT plans ... \n" ;
         	
-	FFTW3_FFT::Ptr tempf( new FFTW3_FFT( _DimX, _DimY, _DimZ, true,  true, 3 ) ) ;
-	_FFTplanf = tempf ;
-	
-	FFTW3_FFT::Ptr tempb( new FFTW3_FFT( _DimX, _DimY, _DimZ, false, true, 3 ) ) ;
-	_FFTplanb = tempb ;
+	_FFTplanf = new FFTW3_FFT (_DimX, _DimY, _DimZ, true,  true, 3) ;
+	_FFTplanb = new FFTW3_FFT (_DimX, _DimY, _DimZ, false, true, 3) ;
 		
 	time( &_t1 ) ;
 	std::cout << " EMdeconvolver::run completes creating FFT plans, elapsed "
@@ -384,11 +394,8 @@ void EMdeconvolver::_EMstartRun( int DimX, int DimY, int DimZ, EMsws & ws )
 	time( &_t0 ) ;
 	std::cout << " EMdeconvolver::run starts creating FFT plans ... \n" ;
         	
-	FFTW3_FFT::Ptr tempf( new FFTW3_FFT( _DimX, _DimY, _DimZ, true,  false, 3 ) ) ;
-	_FFTplanf = tempf ;
-	
-	FFTW3_FFT::Ptr tempb( new FFTW3_FFT( _DimX, _DimY, _DimZ, false, false, 3 ) ) ;
-	_FFTplanb = tempb ;
+	_FFTplanf = new FFTW3_FFT (_DimX, _DimY, _DimZ, true,  false, 3) ;
+	_FFTplanb = new FFTW3_FFT( _DimX, _DimY, _DimZ, false, false, 3) ;
 		
 	time( &_t1 ) ;
 	std::cout << " EMdeconvolver::run completes creating FFT plans, elapsed "
@@ -402,6 +409,7 @@ void EMdeconvolver::_EMstartRun( int DimX, int DimY, int DimZ, EMsws & ws )
 	ws.buf_re = new float[ ws.size ] ;
 	ws.buf_im = new float[ ws.size ] ;
 	ws.buf    = new float[ _Space  ] ;
+	
 	if( _Accelerate || _TrackLikelihood )
 	{
 		ws.eimg = new float[ _Space ] ;

@@ -20,9 +20,9 @@
  
 
 #include <stdlib.h>
-#include "deconv/Fluo3DPSF.h"
-#include "deconv/FluoRZPSF.h"
-#include "deconv/CCube.h"
+#include "libdeconv/Fluo3DPSF.h"
+#include "libdeconv/FluoRZPSF.h"
+#include "libdeconv/CCube.h"
 
 
 /*
