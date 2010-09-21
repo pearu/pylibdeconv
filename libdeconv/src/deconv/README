@@ -6,12 +6,12 @@ About:
 
 Requirements Checklist:
 
-	A working installation of a semi-recent Linux distro.  This guide was written using
-	a fresh installation of Ubuntu Lucid Lynx 10.04 which is the latest stable release.
-
+	A working installation of a recent Linux distro, or (on Mac OS/X) properly installed Developer Tools 
+	(available at http://developer.apple.com/technologies/tools/).
+	
 INSTALLATION
 
-NOTE: If you follow along with the Ubuntu Lucid Lynx installation instructions, you'll have to make sure
+NOTE: If you follow along with the Ubuntu Dapper installation instructions, you'll have to make sure
 that the universe sources are uncommented in /etc/apt/sources.list
 
 ==========================
@@ -20,7 +20,7 @@ that the universe sources are uncommented in /etc/apt/sources.list
 
 For those not using Ubuntu, you need at minimal, gcc/g++, scons, and subversion to get the software.
 Building your own compiler is outside the scope of this document.  scons and subversion are the only two
-nonstandard packages, although subversion is becoming much more standard, and scons is readily availible
+nonstandard packages, although subversion is becomming much more standard, and scons is readily availible
 from most package repositories.
 
 $ sudo apt-get install build-essential manpages-dev automake1.9 scons subversion
@@ -31,7 +31,6 @@ $ sudo apt-get install build-essential manpages-dev automake1.9 scons subversion
 
 Extra libraries needed:
 
-	boost headers		- Boost Library
 	libfftw3 libfftw3f	- FFTW3 Library
 	libgslcblas libgsl	- Gnu Science Library
 	libglut libGL libGLU	- GL Library, only if you plan on installing viewers
@@ -50,9 +49,33 @@ Get sources from the repository:
 
 $ svn co http://svn.lsdcas.engineering.uiowa.edu/repos/lsdcas/trunk/deconv
 $ cd deconv
+
+Build all in the "/usr/local/" directory: (default, make sure that you have the permission)
  
 $ scons
 $ sudo scons install
+
+Build all in the current directory:
+
+$ scons Local=1
+$ sudo scons install
+
+Build libdeconv and its utilities only in the "/usr/local/" directory:
+
+$ scons LibOnly=1
+$ sudo scons install
+
+Build libdeconv and its utilities only in the current directory:
+
+$ scons Local=1 LibOnly=1
+$ sudo scons install
+
+If you get errors while the software is building, try using:
+
+$ scons -h
+
+To get a list of all the possible build options. Most likely, a required library is installed somewhere other
+than expected.  This is common for libraries you may have built locally.
 
 ==========================
 4. Update ld configuration
@@ -76,9 +99,10 @@ $ sudo vi /etc/ld.so.conf
 
 This may or may not be an empty file.  The format is a single directory entry per line.
 
-Regardless, just add a line to the end of the file:
-
-'/usr/local/lib'
+Regardless, just add to the end of the file with
+'/usr/local/lib' (if you install 'deconv' in the default mode)
+or
+'the_path_of_libdeconv' (if you install 'deconv' using 'Local=1')
 
 Now all you need is one last command to inform ld of its new configuration
 
@@ -91,4 +115,4 @@ Contact
 =======
 
 If you have questions, comments, concerns, rants, or raves, 
-shoot me an email at: michael-mackey@uiowa.edu
+shoot me an email at: yuansheng-sun@uiowa.edu

@@ -19,8 +19,8 @@
  */
  
 
-#include "deconv/LWdeconvolver.h"
-#include "deconv/CCube.h"
+#include "libdeconv/LWdeconvolver.h"
+#include "libdeconv/CCube.h"
 
 
 /*
@@ -66,7 +66,7 @@ int main( int argc, char ** argv )
 	CCube<DataType>      image ;
 	CCube<DataType>      psf ;
 	CCube<DataType>      object ;
-	LWdeconvolver        lw ;
+	LWdeconvolver*       lw = new LWdeconvolver() ;
 	WorkSpaceType        ws ;
 	FILE*                fp ;
 	char                 filename[ 256 ] ;
@@ -79,19 +79,19 @@ int main( int argc, char ** argv )
 		psf.read( argv[2] ) ;
 		object.read( argv[3] ) ;
 		
-		lw.init( Apply_Normalization, Track_Likelihood, Track_Max_In_Object, Check_Program_Run ) ;
+		lw->init( Apply_Normalization, Track_Likelihood, Track_Max_In_Object, Check_Program_Run ) ;
 		
-		if( argc > 5 ) lw.setMaxRunIteration( (unsigned int)( atoi(argv[5]) ) ) ; 
-		if( argc > 6 ) lw.setCriterion( (double)( atof(argv[6]) ) ) ;
+		if( argc > 5 ) lw->setMaxRunIteration( (unsigned int)( atoi(argv[5]) ) ) ; 
+		if( argc > 6 ) lw->setCriterion( (double)( atof(argv[6]) ) ) ;
 		
-		lw.run( image.length(), image.width(), image.height(), image.data(), psf.data(), object.data(), ws ) ;
+		lw->run( image.length(), image.width(), image.height(), image.data(), psf.data(), object.data(), ws ) ;
 		
 		sprintf( filename, "%s_plan.txt", argv[4] ) ;
-		lw.exportLW( filename ) ;
+		lw->exportLW( filename ) ;
 		
-		vtrack = new double [ lw.MaxRunIteration() ] ;
+		vtrack = new double [ lw->MaxRunIteration() ] ;
 	
-		vtrack_size = lw.exportUpdateTrack( vtrack ) ;
+		vtrack_size = lw->exportUpdateTrack( vtrack ) ;
 		if( vtrack_size > 0 )
 		{
 			sprintf( filename, "%s_Update.txt", argv[4] ) ;
@@ -99,9 +99,9 @@ int main( int argc, char ** argv )
 			for( int i = 0 ; i < vtrack_size ; i++ ) fprintf( fp, "%4d %12.6e\n", i, vtrack[i] ) ;
 			fclose( fp ) ;
 
-			if( lw.TrackMaxInObject() )
+			if( lw->TrackMaxInObject() )
         		{
-				vtrack_size = lw.exportObjectMaxTrack( vtrack ) ;
+				vtrack_size = lw->exportObjectMaxTrack( vtrack ) ;
 				sprintf( filename, "%s_MaxIntensity.txt", argv[4] ) ;
 				fp = fopen( filename, "wt" ) ;
 				for( int i = 0 ; i < vtrack_size ; i++ ) fprintf( fp, "%4d %12.6e\n", i, vtrack[i] ) ;
@@ -109,9 +109,9 @@ int main( int argc, char ** argv )
                 	}
                 	else	std::cout << " MaxIntensity of deconvolved object wasn't tracked iteratively.\n" ;
 
-			if( lw.TrackLikelihood() )
+			if( lw->TrackLikelihood() )
 			{
-				vtrack_size = lw.exportLikelihoodTrack( vtrack ) ;
+				vtrack_size = lw->exportLikelihoodTrack( vtrack ) ;
 				sprintf( filename, "%s_Likelihood.txt", argv[4] ) ;
 				fp = fopen( filename, "wt" ) ;
 				for( int i = 0 ; i < vtrack_size ; i++ ) fprintf( fp, "%4d %12.6e\n", i, vtrack[i] ) ;
@@ -124,6 +124,7 @@ int main( int argc, char ** argv )
 		else	std::cout << " LWdeconvolver::run() didNOT go into the loop.\n" ;
 		
 		delete [] vtrack ;
+		delete lw ;
 	}
 	else
 	{

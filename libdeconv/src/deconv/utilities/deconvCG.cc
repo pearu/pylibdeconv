@@ -19,8 +19,8 @@
  */
 
 
-#include "deconv/CGdeconvolver.h"
-#include "deconv/CCube.h"
+#include "libdeconv/CGdeconvolver.h"
+#include "libdeconv/CCube.h"
 
 
 /*
@@ -66,7 +66,7 @@ int main( int argc, char ** argv )
 	CCube<DataType>      image ;
 	CCube<DataType>      psf ;
 	CCube<DataType>      object ;
-	CGdeconvolver        cg ;
+	CGdeconvolver*       cg = new CGdeconvolver() ;
 	WorkSpaceType        ws ;
 	FILE*                fp ;
 	char                 filename[256] ;
@@ -84,19 +84,19 @@ int main( int argc, char ** argv )
 		if( atoi(argv[5]) == 0 )  IR = false ;
 		else                      IR = true ;
 
-		cg.init( IR, Apply_Normalization, Track_Likelihood, Track_Max_In_Object, Check_Program_Run ) ;
+		cg->init( IR, Apply_Normalization, Track_Likelihood, Track_Max_In_Object, Check_Program_Run ) ;
 		
-		if( argc > 6 ) cg.setMaxRunIteration( (unsigned int)( atoi(argv[6]) ) ) ; 
-		if( argc > 7 ) cg.setCriterion( (double)( atof(argv[7]) ) ) ;
+		if( argc > 6 ) cg->setMaxRunIteration( (unsigned int)( atoi(argv[6]) ) ) ; 
+		if( argc > 7 ) cg->setCriterion( (double)( atof(argv[7]) ) ) ;
 		
-		cg.run( image.length(), image.width(), image.height(), image.data(), psf.data(), object.data(), ws ) ;
+		cg->run( image.length(), image.width(), image.height(), image.data(), psf.data(), object.data(), ws ) ;
 
 		sprintf( filename, "%s_plan.txt", argv[4] ) ;
-		cg.exportCG( filename ) ;
+		cg->exportCG( filename ) ;
 		
-		vtrack = new double [ cg.MaxRunIteration() ] ;
+		vtrack = new double [ cg->MaxRunIteration() ] ;
 
-		vtrack_size = cg.exportUpdateTrack( vtrack ) ;
+		vtrack_size = cg->exportUpdateTrack( vtrack ) ;
 		if( vtrack_size > 0 )
 		{
 			sprintf( filename, "%s_Update.txt", argv[4] ) ;
@@ -104,9 +104,9 @@ int main( int argc, char ** argv )
 			for( int i = 0; i < vtrack_size; i++ ) fprintf( fp, "%4d %12.6e\n", i, vtrack[i] ) ;
 			fclose( fp ) ;
 
-			if( cg.TrackMaxInObject() )
+			if( cg->TrackMaxInObject() )
 			{
-				vtrack_size = cg.exportObjectMaxTrack( vtrack ) ;
+				vtrack_size = cg->exportObjectMaxTrack( vtrack ) ;
 				sprintf( filename, "%s_MaxIntensity.txt", argv[4] ) ;
 				fp = fopen( filename, "wt" ) ;
 				for( int i = 0; i < vtrack_size; i++ ) fprintf( fp, "%4d %12.6e\n", i, vtrack[i] ) ;
@@ -114,9 +114,9 @@ int main( int argc, char ** argv )
 			}
 			else	std::cout << " MaxIntensity of deconvolved object wasn't tracked iteratively.\n" ;
 
-			if( cg.TrackLikelihood() )
+			if( cg->TrackLikelihood() )
 			{
-				vtrack_size = cg.exportLikelihoodTrack( vtrack ) ;
+				vtrack_size = cg->exportLikelihoodTrack( vtrack ) ;
 				sprintf( filename, "%s_Likelihood.txt", argv[4] ) ;
 				fp = fopen( filename, "wt" ) ;
 				for( int i = 0; i < vtrack_size; i++ ) fprintf( fp, "%4d %12.6e\n", i, vtrack[i] ) ;
@@ -129,6 +129,7 @@ int main( int argc, char ** argv )
 		else	std::cout << " CGdeconvolver::run() didNOT go into the loop.\n" ;
 		
 		delete [] vtrack ;
+		delete [] cg ;
 	}
 	else
 	{

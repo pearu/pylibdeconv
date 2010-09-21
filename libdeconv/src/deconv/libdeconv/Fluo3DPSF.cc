@@ -101,9 +101,9 @@ void Fluo3DPSF::create( int DimX, int DimY, int DimZ, float * psf, bool Check )
 	int  HalfX = DimX / 2 ;
 	int  HalfY = DimY / 2 ;
 	int  HalfZ = DimZ / 2 ;
-
+	
 	_setDimensions( DimX, DimY, DimZ ) ;
-
+	
 	SingleSlice slice( _DimX, _DimY ) ;
 	gsl_integration_workspace * ws = gsl_integration_workspace_alloc( IntegrationLimit ) ;
 	

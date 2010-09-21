@@ -19,47 +19,9 @@
  */
 
 
-#include "MYdef.h"
 #include "MYerror.h"
 #include "SHIFTfft.h"
 #include "FFTW3fft.h"
-
-
-void FFTW3_set_1D_dims( boost::shared_array< fftw_iodim >& dims, int DimX )
-{
-	dims[0].n  = DimX ;
-	dims[0].is = 1 ;
-	dims[0].os = 1 ;
-}
-
-
-
-void FFTW3_set_2D_dims( boost::shared_array< fftw_iodim >& dims, int DimX, int DimY )
-{
-	dims[1].n  = DimY ;
-	dims[1].is = DimX ;
-	dims[1].os = DimX ;
-	dims[0].n  = DimX ;
-	dims[0].is = 1 ;
-	dims[0].os = 1 ;
-}
-
-
-
-void FFTW3_set_3D_dims( boost::shared_array< fftw_iodim >& dims, int DimX, int DimY, int DimZ )
-{
-	dims[2].n  = DimZ ;
-	dims[2].is = DimX * DimY ;
-	dims[2].os = DimX * DimY ;
-	dims[1].n  = DimY ;
-	dims[1].is = DimX ;
-	dims[1].os = DimX ;
-	dims[0].n  = DimX ;
-	dims[0].is = 1 ;
-	dims[0].os = 1 ;
-}
-
-
 
 class FFTW3Error : public Error
 {
@@ -106,340 +68,347 @@ class FFTW3Error : public Error
 } ;
 
 
-
 FFTW3_FFT::~FFTW3_FFT()
 {
-	if( _status )
-	{
-		if( _IsDouble )
-		{
-			fftw_destroy_plan( _dplan ) ;
-		}
-		else
-		{
-			fftwf_destroy_plan( _splan ) ;
-		}
-	}
+	if (_dplan)
+		fftw_destroy_plan (_dplan) ;
+
+	if (_splan)
+		fftwf_destroy_plan (_splan) ;
+
+	if (_fbuf1)
+		delete [] _fbuf1 ;
+
+	if (_fbuf2)
+		delete [] _fbuf2 ;
+		
+	if (_fbuf3)
+		delete [] _fbuf3 ;
+		
+	if (_dbuf1)
+		delete [] _dbuf1 ;
+		
+	if (_dbuf2)
+		delete [] _dbuf2 ;
+		
+	if (_dbuf3)
+		delete [] _dbuf3 ;
 }
-
-
 
 FFTW3_FFT::FFTW3_FFT( int DimX, int DimY, int DimZ, bool IsForward, bool IsDouble, int status )
 {
 	_DimX = DimX ;
 	_DimY = DimY ;
 	_DimZ = DimZ ;
+	
+	_dplan = NULL ;
+	_splan = NULL ;
+	_fbuf1 = _fbuf2 = _fbuf3 = NULL ;
+	_dbuf1 = _dbuf2 = _dbuf3 = NULL ;
 
-	if( DimZ % 2 == 0 ) _FFTsize = (DimZ/2 + 1) * DimY * DimX ;
-	else                _FFTsize = ((DimZ+1)/2) * DimY * DimX ;
+	if( DimZ % 2 == 0 )
+		_FFTsize = (DimZ/2 + 1) * DimY * DimX ;
+	else
+		_FFTsize = ((DimZ+1)/2) * DimY * DimX ;
 	
 	_weight = (double) (DimX * DimY * DimZ) ;
 	_IsForward = IsForward ;
 	_IsDouble = IsDouble ;
 	_status = status ;
-	
-	boost::shared_array< fftw_iodim > dims( new fftw_iodim[3] ) ;
-	FFTW3_set_3D_dims( dims, DimX, DimY, DimZ ) ;
 
-	if( status == 1 )
+	fftw_iodim dims [3] ;
+	
+	dims[2].n  = DimZ ;
+	dims[2].is = DimX * DimY ;
+	dims[2].os = DimX * DimY ;
+	dims[1].n  = DimY ;
+	dims[1].is = DimX ;
+	dims[1].os = DimX ;
+	dims[0].n  = DimX ;
+	dims[0].is = 1 ;
+	dims[0].os = 1 ;
+
+	if (status == 1)
 	{
-		if( IsDouble )
+		if (IsDouble)
 		{
-			DoubleArray buf1( new double[ DimX * DimY * DimZ ] ) ;
-			DoubleArray buf2( new double[ DimX * DimY * DimZ ] ) ;
-			DoubleArray buf3( new double[ DimX * DimY * DimZ ] ) ;
-			
-			if( IsForward )
-			{
-				_dplan = fftw_plan_guru_split_dft_r2c( 3, dims.get(), 0, NULL, buf1.get(), buf2.get(), buf3.get(), FFTW3_FLAG ) ;
-			}
+			_dbuf1 = new double [ DimX * DimY * DimZ] ;			
+			_dbuf2 = new double [ DimX * DimY * DimZ] ;
+			_dbuf3 = new double [ DimX * DimY * DimZ] ;
+
+			if (IsForward)
+				_dplan = fftw_plan_guru_split_dft_r2c (3, dims, 0, NULL, _dbuf1, _dbuf2, _dbuf3, FFTW3_FLAG) ;
 			else
-			{	
-				_dplan = fftw_plan_guru_split_dft_c2r( 3, dims.get(), 0, NULL, buf1.get(), buf2.get(), buf3.get(), FFTW3_FLAG ) ;
-			}
+				_dplan = fftw_plan_guru_split_dft_c2r (3, dims, 0, NULL, _dbuf1, _dbuf2, _dbuf3, FFTW3_FLAG) ;
 		}
 		else
 		{
-			SingleArray buf1( new float[ DimX * DimY * DimZ ] ) ;
-			SingleArray buf2( new float[ DimX * DimY * DimZ ] ) ;
-			SingleArray buf3( new float[ DimX * DimY * DimZ ] ) ;
-			
-			if( IsForward )
-			{
-				_splan = fftwf_plan_guru_split_dft_r2c( 3, dims.get(), 0, NULL, buf1.get(), buf2.get(), buf3.get(), FFTW3_FLAG ) ;
-			}
+			_fbuf1 = new float [ DimX * DimY * DimZ] ;
+			_fbuf2 = new float [ DimX * DimY * DimZ] ;
+			_fbuf3 = new float [ DimX * DimY * DimZ] ;
+
+			if (IsForward)
+				_splan = fftwf_plan_guru_split_dft_r2c (3, dims, 0, NULL, _fbuf1, _fbuf2, _fbuf3, FFTW3_FLAG) ;
 			else
-			{	
-				_splan = fftwf_plan_guru_split_dft_c2r( 3, dims.get(), 0, NULL, buf1.get(), buf2.get(), buf3.get(), FFTW3_FLAG ) ;
-			}
+				_splan = fftwf_plan_guru_split_dft_c2r (3, dims, 0, NULL, _fbuf1, _fbuf2, _fbuf3, FFTW3_FLAG) ;
 		}
 	}
-	else if( status == 2 )
+	else if (status == 2)
 	{	
-		if( IsDouble )
+		if (IsDouble)
 		{
-			DoubleArray buf1( new double[ DimX * DimY * DimZ ] ) ;
-			DoubleArray buf2( new double[ DimX * DimY * DimZ ] ) ;
-			
-			if( IsForward )
-			{
-				_dplan = fftw_plan_guru_split_dft_r2c( 3, dims.get(), 0, NULL, buf1.get(), buf1.get(), buf2.get(), FFTW3_FLAG ) ;
-			}
+			_dbuf1 = new double [ DimX * DimY * DimZ ] ;
+			_dbuf2 = new double [ DimX * DimY * DimZ ] ;
+
+			if (IsForward)
+				_dplan = fftw_plan_guru_split_dft_r2c (3, dims, 0, NULL, _dbuf1, _dbuf2, _dbuf2, FFTW3_FLAG) ;
 			else
-			{	
-				_dplan = fftw_plan_guru_split_dft_c2r( 3, dims.get(), 0, NULL, buf1.get(), buf2.get(), buf1.get(), FFTW3_FLAG ) ;
-			}
+				_dplan = fftw_plan_guru_split_dft_c2r (3, dims, 0, NULL, _dbuf1, _dbuf2, _dbuf1, FFTW3_FLAG) ;
 		}
 		else
 		{
-			SingleArray buf1( new float[ DimX * DimY * DimZ ] ) ;
-			SingleArray buf2( new float[ DimX * DimY * DimZ ] ) ;
-			
-			if( IsForward )
-			{
-				_splan = fftwf_plan_guru_split_dft_r2c( 3, dims.get(), 0, NULL, buf1.get(), buf1.get(), buf2.get(), FFTW3_FLAG ) ;
-			}
+			_fbuf1 = new float [ DimX * DimY * DimZ ] ;
+			_fbuf2 = new float [ DimX * DimY * DimZ ] ;
+
+			if (IsForward)
+				_splan = fftwf_plan_guru_split_dft_r2c (3, dims, 0, NULL, _fbuf1, _fbuf1, _fbuf2, FFTW3_FLAG) ;
 			else
-			{	
-				_splan = fftwf_plan_guru_split_dft_c2r( 3, dims.get(), 0, NULL, buf1.get(), buf2.get(), buf1.get(), FFTW3_FLAG ) ;
-			}
+				_splan = fftwf_plan_guru_split_dft_c2r (3, dims, 0, NULL, _fbuf1, _fbuf2, _fbuf1, FFTW3_FLAG) ;
 		}
 	}
-	else if( status == 3 )
+	else if (status == 3)
 	{
-		if( IsDouble )
+		if (IsDouble)
 		{
-			if( IsForward )
+			if (IsForward)
 			{
-				DoubleArray buf1( new double[ DimX * DimY * DimZ ] ) ;
-				DoubleArray buf2( new double[ _FFTsize ] ) ;
-				DoubleArray buf3( new double[ _FFTsize ] ) ;
-				
-				_dplan = fftw_plan_guru_split_dft_r2c( 3, dims.get(), 0, NULL, buf1.get(), buf2.get(), buf3.get(), FFTW3_FLAG ) ;
+				_dbuf1 = new double [ DimX * DimY * DimZ] ;
+				_dbuf2 = new double [ _FFTsize ] ;
+				_dbuf3 = new double [ _FFTsize ] ;
+
+				_dplan = fftw_plan_guru_split_dft_r2c (3, dims, 0, NULL, _dbuf1, _dbuf2, _dbuf3, FFTW3_FLAG) ;
 			}
 			else
 			{	
-				DoubleArray buf1( new double[ _FFTsize ] ) ;
-				DoubleArray buf2( new double[ _FFTsize ] ) ;
-				DoubleArray buf3( new double[ DimX * DimY * DimZ ] ) ;
-				
-				_dplan = fftw_plan_guru_split_dft_c2r( 3, dims.get(), 0, NULL, buf1.get(), buf2.get(), buf3.get(), FFTW3_FLAG ) ;
+				_dbuf1 = new double [ _FFTsize ] ;
+				_dbuf2 = new double [ _FFTsize ] ;
+				_dbuf3 = new double [ DimX * DimY * DimZ] ;
+
+				_dplan = fftw_plan_guru_split_dft_r2c (3, dims, 0, NULL, _dbuf1, _dbuf2, _dbuf3, FFTW3_FLAG) ;
 			}
 		}
 		else
 		{
-			if( IsForward )
+			if (IsForward)
 			{
-				SingleArray buf1( new float[ DimX * DimY * DimZ ] ) ;
-				SingleArray buf2( new float[ _FFTsize ] ) ;
-				SingleArray buf3( new float[ _FFTsize ] ) ;
-				
-				_splan = fftwf_plan_guru_split_dft_r2c( 3, dims.get(), 0, NULL, buf1.get(), buf2.get(), buf3.get(), FFTW3_FLAG ) ;
+				_fbuf1 = new float [ DimX * DimY * DimZ] ;
+				_fbuf2 = new float [ _FFTsize ] ;
+				_fbuf3 = new float [ _FFTsize ] ; 
+
+				_splan = fftwf_plan_guru_split_dft_r2c (3, dims, 0, NULL, _fbuf1, _fbuf2, _fbuf3, FFTW3_FLAG) ;
 			}
 			else
 			{					
-				SingleArray buf1( new float[ _FFTsize ] ) ;
-				SingleArray buf2( new float[ _FFTsize ] ) ;
-				SingleArray buf3( new float[ DimX * DimY * DimZ ] ) ;
-				
-				_splan = fftwf_plan_guru_split_dft_c2r( 3, dims.get(), 0, NULL, buf1.get(), buf2.get(), buf3.get(), FFTW3_FLAG ) ;
+				_fbuf1 = new float [ _FFTsize ] ; 
+				_fbuf2 = new float [ _FFTsize ] ;
+				_fbuf3 = new float [ DimX * DimY * DimZ] ;
+
+				_splan = fftwf_plan_guru_split_dft_c2r (3, dims, 0, NULL, _fbuf1, _fbuf2, _fbuf3, FFTW3_FLAG) ;
 			}
 		}
 	}
 	else 
-	{
-		throw FFTW3Error( 0 ) ;
-	}
+		throw FFTW3Error (0) ;
 }
 
-
-	
 void FFTW3_FFT::execute( double * buf1, double * buf2, double * buf3 )
 {
 	if( _IsDouble )
 	{
 		if( _IsForward )
-		{
 			fftw_execute_split_dft_r2c( _dplan, buf1, buf2, buf3 ) ;
-		}
 		else
 		{
 			fftw_execute_split_dft_c2r( _dplan, buf1, buf2, buf3 ) ;
 
 			for( int i = 0 ; i < _DimX * _DimY * _DimZ ; i++ )
-			{
 				buf3[i] /= _weight ;
-			}
 		}
 	}
 	else
-	{
 		throw FFTW3Error( -2, _IsForward ) ;
-	}
 }
-
-
 
 void FFTW3_FFT::execute( float * buf1, float * buf2, float * buf3 )
 {
 	if( !_IsDouble )
 	{
 		if( _IsForward )
-		{
 			fftwf_execute_split_dft_r2c( _splan, buf1, buf2, buf3 ) ;
-		}
 		else
 		{
 			fftwf_execute_split_dft_c2r( _splan, buf1, buf2, buf3 ) ;
 
 			for( int i = 0 ; i < _DimX * _DimY * _DimZ ; i++ )
-			{
 				buf3[i] /= _weight ;
-			}
 		}
 	}
 	else
-	{
 		throw FFTW3Error( -3, _IsForward ) ;
-	}
 }
-
-
 
 void fft3d( int DimX, int DimY, int DimZ, double * in, double * out_re, double * out_im )
 {
-	boost::shared_array< fftw_iodim > dims( new fftw_iodim[3] ) ;
-	FFTW3_set_3D_dims( dims, DimX, DimY, DimZ ) ;	
+	fftw_iodim dims [3] ;
 	
-	fftw_plan p = fftw_plan_guru_split_dft_r2c( 3, dims.get(), 0, NULL, in, out_re, out_im, FFTW_ESTIMATE ) ;
+	dims[2].n  = DimZ ;
+	dims[2].is = DimX * DimY ;
+	dims[2].os = DimX * DimY ;
+	dims[1].n  = DimY ;
+	dims[1].is = DimX ;
+	dims[1].os = DimX ;
+	dims[0].n  = DimX ;
+	dims[0].is = 1 ;
+	dims[0].os = 1 ;
+
+	fftw_plan p = fftw_plan_guru_split_dft_r2c( 3, dims, 0, NULL, in, out_re, out_im, FFTW_ESTIMATE ) ;
 
 	if( p )
-	{
 		fftw_execute_split_dft_r2c( p, in, out_re, out_im ) ;
-	}
 	else
-	{
-		throw FFTW3Error( 0 ) ;		
-	}
+		throw FFTW3Error( 0 ) ;	
+		
+	fftw_destroy_plan (p) ;	
 }
 
 
 
 void fft3d( int DimX, int DimY, int DimZ, float * in, float * out_re, float * out_im )
 {
-	boost::shared_array< fftw_iodim > dims( new fftw_iodim[3] ) ;
-	FFTW3_set_3D_dims( dims, DimX, DimY, DimZ ) ;	
+	fftw_iodim dims [3] ;
 	
-	fftwf_plan p = fftwf_plan_guru_split_dft_r2c( 3, dims.get(), 0, NULL, in, out_re, out_im, FFTW_ESTIMATE ) ;
-
+	dims[2].n  = DimZ ;
+	dims[2].is = DimX * DimY ;
+	dims[2].os = DimX * DimY ;
+	dims[1].n  = DimY ;
+	dims[1].is = DimX ;
+	dims[1].os = DimX ;
+	dims[0].n  = DimX ;
+	dims[0].is = 1 ;
+	dims[0].os = 1 ;
+	
+	fftwf_plan p = fftwf_plan_guru_split_dft_r2c( 3, dims, 0, NULL, in, out_re, out_im, FFTW_ESTIMATE ) ;
+	
 	if( p )
-	{
 		fftwf_execute_split_dft_r2c( p, in, out_re, out_im ) ;
+	else
+		throw FFTW3Error( 0 ) ;
+				
+	fftwf_destroy_plan (p) ;
+}
+
+void fft3d( int DimX, int DimY, int DimZ, bool IsForward, bool IsShift, 
+            double * in_re, double * in_im, double * out_re, double * out_im )
+{
+	fftw_iodim dims [3] ;
+	
+	dims[2].n  = DimZ ;
+	dims[2].is = DimX * DimY ;
+	dims[2].os = DimX * DimY ;
+	dims[1].n  = DimY ;
+	dims[1].is = DimX ;
+	dims[1].os = DimX ;
+	dims[0].n  = DimX ;
+	dims[0].is = 1 ;
+	dims[0].os = 1 ;
+
+	if( IsForward ) 
+	{
+		fftw_plan p = fftw_plan_guru_split_dft( 3, dims, 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
+
+		if( p )
+		{
+			if( IsShift )
+				shift3d( DimX, DimY, DimZ, in_re, in_im, in_re, in_im ) ;
+
+			fftw_execute_split_dft( p, in_re, in_im, out_re, out_im ) ;
+
+			if( IsShift && in_re != out_re && in_im != out_im )
+				shift3d( DimX, DimY, DimZ, in_re, in_im, in_re, in_im ) ;
+			
+			fftw_destroy_plan (p) ;
+		}
+		else
+			throw FFTW3Error( 0 ) ;		
 	}
 	else
 	{
-		throw FFTW3Error( 0 ) ;		
+		fftw_plan p = fftw_plan_guru_split_dft( 3, dims, 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
+
+		if( p )
+		{
+			double weight = (double) ( DimX * DimY * DimZ ) ;
+
+			fftw_execute_split_dft( p, in_im, in_re, out_im, out_re ) ;
+			double * temp = out_im ;
+			out_im = out_re ;
+			out_re = temp ;
+
+			if( IsShift )
+				shift3d( DimX, DimY, DimZ, out_re, out_im, out_re, out_im ) ;
+
+			fftw_destroy_plan (p) ;
+
+			for( int i = 0 ; i < DimX * DimY * DimZ ; i++ )
+			{
+				out_re[i] /= weight ;
+				out_im[i] /= weight ;
+			}
+		}
+		else
+			throw FFTW3Error( 0 ) ;		
 	}
 }
 
+void fft3d( int DimX, int DimY, int DimZ, bool IsForward, bool IsShift, 
+            float * in_re, float * in_im, float * out_re, float * out_im )
+{
+	fftw_iodim dims [3] ;
+	
+	dims[2].n  = DimZ ;
+	dims[2].is = DimX * DimY ;
+	dims[2].os = DimX * DimY ;
+	dims[1].n  = DimY ;
+	dims[1].is = DimX ;
+	dims[1].os = DimX ;
+	dims[0].n  = DimX ;
+	dims[0].is = 1 ;
+	dims[0].os = 1 ;
+
+	if( IsForward ) 
+	{
+		fftwf_plan p = fftwf_plan_guru_split_dft( 3, dims, 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
+
+		if( p )
+		{
+			if( IsShift )
+				shift3d( DimX, DimY, DimZ, in_re, in_im, in_re, in_im ) ;
+
+			fftwf_execute_split_dft( p, in_re, in_im, out_re, out_im ) ;
+
+			if( IsShift && in_re != out_re && in_im != out_im )
+				shift3d( DimX, DimY, DimZ, in_re, in_im, in_re, in_im ) ;
 		
-
-void fft3d( int DimX, int DimY, int DimZ, bool IsForward, bool IsShift, 
-            double * in_re, double * in_im, double * out_re, double * out_im )
-{
-	boost::shared_array< fftw_iodim > dims( new fftw_iodim[3] ) ;
-	FFTW3_set_3D_dims( dims, DimX, DimY, DimZ ) ;	
-
-	if( IsForward ) 
-	{
-		fftw_plan p = fftw_plan_guru_split_dft( 3, dims.get(), 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
-
-		if( p )
-		{
-			if( IsShift )
-			{
-				shift3d( DimX, DimY, DimZ, in_re, in_im, in_re, in_im ) ;
-			}
-
-			fftw_execute_split_dft( p, in_re, in_im, out_re, out_im ) ;
-
-			if( IsShift && in_re != out_re && in_im != out_im )
-			{
-				shift3d( DimX, DimY, DimZ, in_re, in_im, in_re, in_im ) ;
-			}
+			fftwf_destroy_plan (p) ;
 		}
 		else
-		{
 			throw FFTW3Error( 0 ) ;		
-		}
 	}
 	else
 	{
-		fftw_plan p = fftw_plan_guru_split_dft( 3, dims.get(), 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
+		fftwf_plan p = fftwf_plan_guru_split_dft( 3, dims, 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
 
-		if( p )
-		{
-			double weight = (double) ( DimX * DimY * DimZ ) ;
-
-			fftw_execute_split_dft( p, in_im, in_re, out_im, out_re ) ;
-			double * temp = out_im ;
-			out_im = out_re ;
-			out_re = temp ;
-
-			if( IsShift )
-			{
-				shift3d( DimX, DimY, DimZ, out_re, out_im, out_re, out_im ) ;
-			}
-
-			for( int i = 0 ; i < DimX * DimY * DimZ ; i++ )
-			{
-				out_re[i] /= weight ;
-				out_im[i] /= weight ;
-			}
-		}
-		else
-		{
-			throw FFTW3Error( 0 ) ;		
-		}
-	}
-}
-
-
-
-void fft3d( int DimX, int DimY, int DimZ, bool IsForward, bool IsShift, 
-            float * in_re, float * in_im, float * out_re, float * out_im )
-{
-	boost::shared_array< fftw_iodim > dims( new fftw_iodim[3] ) ;
-	FFTW3_set_3D_dims( dims, DimX, DimY, DimZ ) ;
-
-	if( IsForward ) 
-	{
-		fftwf_plan p = fftwf_plan_guru_split_dft( 3, dims.get(), 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
-
-		if( p )
-		{
-			if( IsShift )
-			{
-				shift3d( DimX, DimY, DimZ, in_re, in_im, in_re, in_im ) ;
-			}
-
-			fftwf_execute_split_dft( p, in_re, in_im, out_re, out_im ) ;
-
-			if( IsShift && in_re != out_re && in_im != out_im )
-			{
-				shift3d( DimX, DimY, DimZ, in_re, in_im, in_re, in_im ) ;
-			}
-		}
-		else
-		{
-			throw FFTW3Error( 0 ) ;		
-		}
-	}
-	else
-	{
-		fftwf_plan p = fftwf_plan_guru_split_dft( 3, dims.get(), 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
-
-		if( p )
+		if (p)
 		{
 			double weight = (double) ( DimX * DimY * DimZ ) ;
 
@@ -449,9 +418,9 @@ void fft3d( int DimX, int DimY, int DimZ, bool IsForward, bool IsShift,
 			out_re = temp ;
 
 			if( IsShift )
-			{
 				shift3d( DimX, DimY, DimZ, out_re, out_im, out_re, out_im ) ;
-			}
+
+			fftwf_destroy_plan (p) ;
 
 			for( int i = 0 ; i < DimX * DimY * DimZ ; i++ )
 			{
@@ -460,37 +429,37 @@ void fft3d( int DimX, int DimY, int DimZ, bool IsForward, bool IsShift,
 			}
 		}
 		else
-		{
 			throw FFTW3Error( 0 ) ;		
-		}
 	}
 }
-
-
 
 void fft2d( int DimX, int DimY, bool IsForward, bool IsShift, 
             double * in_re, double * in_im, double * out_re, double * out_im )
 {
-	boost::shared_array< fftw_iodim > dims( new fftw_iodim[2] ) ;
-	FFTW3_set_2D_dims( dims, DimX, DimY ) ;
+	fftw_iodim dims [3] ;
+	
+	dims[1].n  = DimY ;
+	dims[1].is = DimX ;
+	dims[1].os = DimX ;
+	dims[0].n  = DimX ;
+	dims[0].is = 1 ;
+	dims[0].os = 1 ;
 
 	if( IsForward ) 
 	{
-		fftw_plan p = fftw_plan_guru_split_dft( 2, dims.get(), 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
+		fftw_plan p = fftw_plan_guru_split_dft( 2, dims, 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
 
 		if( p )
 		{
 			if( IsShift )
-			{
 				shift2d( DimX, DimY, in_re, in_im, in_re, in_im ) ;
-			}
 
 			fftw_execute_split_dft( p, in_re, in_im, out_re, out_im ) ;
 
+			fftw_destroy_plan (p) ;
+
 			if( IsShift && in_re != out_re && in_im != out_im )
-			{
 				shift2d( DimX, DimY, in_re, in_im, in_re, in_im ) ;
-			}
 		}
 		else
 		{
@@ -499,7 +468,7 @@ void fft2d( int DimX, int DimY, bool IsForward, bool IsShift,
 	}
 	else
 	{
-		fftw_plan p = fftw_plan_guru_split_dft( 2, dims.get(), 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
+		fftw_plan p = fftw_plan_guru_split_dft( 2, dims, 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
 
 		if( p )
 		{
@@ -510,10 +479,10 @@ void fft2d( int DimX, int DimY, bool IsForward, bool IsShift,
 			out_im = out_re ;
 			out_re = temp ;
 
+			fftw_destroy_plan (p) ;
+
 			if( IsShift )
-			{
 				shift2d( DimX, DimY, out_re, out_im, out_re, out_im ) ;
-			}
 
 			for( int i = 0 ; i < DimX * DimY ; i++ )
 			{
@@ -522,37 +491,37 @@ void fft2d( int DimX, int DimY, bool IsForward, bool IsShift,
 			}
 		}
 		else
-		{
 			throw FFTW3Error( 0 ) ;		
-		}
 	}
 }
-
-
 
 void fft2d( int DimX, int DimY, bool IsForward, bool IsShift, 
             float * in_re, float * in_im, float * out_re, float * out_im )
 {
-	boost::shared_array< fftw_iodim > dims( new fftw_iodim[2] ) ;
-	FFTW3_set_2D_dims( dims, DimX, DimY ) ;	
+	fftw_iodim dims [3] ;
+	
+	dims[1].n  = DimY ;
+	dims[1].is = DimX ;
+	dims[1].os = DimX ;
+	dims[0].n  = DimX ;
+	dims[0].is = 1 ;
+	dims[0].os = 1 ;
 
 	if( IsForward ) 
 	{
-		fftwf_plan p = fftwf_plan_guru_split_dft( 2, dims.get(), 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
+		fftwf_plan p = fftwf_plan_guru_split_dft( 2, dims, 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
 
 		if( p )
 		{
 			if( IsShift )
-			{
 				shift2d( DimX, DimY, in_re, in_im, in_re, in_im ) ;
-			}
 
 			fftwf_execute_split_dft( p, in_re, in_im, out_re, out_im ) ;
 
+			fftwf_destroy_plan (p) ;
+
 			if( IsShift && in_re != out_re && in_im != out_im )
-			{
 				shift2d( DimX, DimY, in_re, in_im, in_re, in_im ) ;
-			}
 		}
 		else
 		{
@@ -561,7 +530,7 @@ void fft2d( int DimX, int DimY, bool IsForward, bool IsShift,
 	}
 	else
 	{
-		fftwf_plan p = fftwf_plan_guru_split_dft( 2, dims.get(), 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
+		fftwf_plan p = fftwf_plan_guru_split_dft( 2, dims, 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
 
 		if( p )
 		{
@@ -572,10 +541,10 @@ void fft2d( int DimX, int DimY, bool IsForward, bool IsShift,
 			out_im = out_re ;
 			out_re = temp ;
 
+			fftwf_destroy_plan (p) ;
+
 			if( IsShift )
-			{
 				shift2d( DimX, DimY, out_re, out_im, out_re, out_im ) ;
-			}
 
 			for( int i = 0 ; i < DimX * DimY ; i++ )
 			{
@@ -584,46 +553,41 @@ void fft2d( int DimX, int DimY, bool IsForward, bool IsShift,
 			}
 		}
 		else
-		{
 			throw FFTW3Error( 0 ) ;		
-		}
 	}
 }
-
-
 
 void fft1d( int DimX, bool IsForward, bool IsShift, 
             double * in_re, double * in_im, double * out_re, double * out_im )
 {
-	boost::shared_array< fftw_iodim > dims( new fftw_iodim[1] ) ;
-	FFTW3_set_1D_dims( dims, DimX ) ;
+	fftw_iodim dims [3] ;
+	
+	dims[0].n  = DimX ;
+	dims[0].is = 1 ;
+	dims[0].os = 1 ;
 
 	if( IsForward ) 
 	{
-		fftw_plan p = fftw_plan_guru_split_dft( 1, dims.get(), 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
+		fftw_plan p = fftw_plan_guru_split_dft( 1, dims, 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
 
 		if( p )
 		{
 			if( IsShift )
-			{
 				shift1d( DimX, in_re, in_im, in_re, in_im ) ;
-			}
 
 			fftw_execute_split_dft( p, in_re, in_im, out_re, out_im ) ;
 
+			fftw_destroy_plan (p) ;
+
 			if( IsShift && in_re != out_re && in_im != out_im )
-			{
 				shift1d( DimX, in_re, in_im, in_re, in_im ) ;
-			}
 		}
 		else
-		{
 			throw FFTW3Error( 0 ) ;		
-		}
 	}
 	else
 	{
-		fftw_plan p = fftw_plan_guru_split_dft( 1, dims.get(), 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
+		fftw_plan p = fftw_plan_guru_split_dft( 1, dims, 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
 
 		if( p )
 		{
@@ -634,10 +598,10 @@ void fft1d( int DimX, bool IsForward, bool IsShift,
 			out_im = out_re ;
 			out_re = temp ;
 
+			fftw_destroy_plan (p) ;
+
 			if( IsShift )
-			{
 				shift1d( DimX, out_re, out_im, out_re, out_im ) ;
-			}
 
 			for( int i = 0 ; i < DimX ; i++ )
 			{
@@ -646,46 +610,41 @@ void fft1d( int DimX, bool IsForward, bool IsShift,
 			}
 		}
 		else
-		{
 			throw FFTW3Error( 0 ) ;		
-		}
 	}
 }
-
-
 
 void fft1d( int DimX, bool IsForward, bool IsShift, 
             float * in_re, float * in_im, float * out_re, float * out_im )
 {
-	boost::shared_array< fftw_iodim > dims( new fftw_iodim[1] ) ;
-	FFTW3_set_1D_dims( dims, DimX ) ;
+	fftw_iodim dims [3] ;
+	
+	dims[0].n  = DimX ;
+	dims[0].is = 1 ;
+	dims[0].os = 1 ;
 
 	if( IsForward ) 
 	{
-		fftwf_plan p = fftwf_plan_guru_split_dft( 1, dims.get(), 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
+		fftwf_plan p = fftwf_plan_guru_split_dft( 1, dims, 0, NULL, in_re, in_im, out_re, out_im, FFTW_ESTIMATE ) ;
 
 		if( p )
 		{
 			if( IsShift )
-			{
 				shift1d( DimX, in_re, in_im, in_re, in_im ) ;
-			}
 
 			fftwf_execute_split_dft( p, in_re, in_im, out_re, out_im ) ;
 
+			fftwf_destroy_plan (p) ;
+
 			if( IsShift && in_re != out_re && in_im != out_im )
-			{
 				shift1d( DimX, in_re, in_im, in_re, in_im ) ;
-			}
 		}
 		else
-		{
 			throw FFTW3Error( 0 ) ;		
-		}
 	}
 	else
 	{
-		fftwf_plan p = fftwf_plan_guru_split_dft( 1, dims.get(), 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
+		fftwf_plan p = fftwf_plan_guru_split_dft( 1, dims, 0, NULL, in_im, in_re, out_im, out_re, FFTW_ESTIMATE ) ;
 
 		if( p )
 		{
@@ -696,10 +655,10 @@ void fft1d( int DimX, bool IsForward, bool IsShift,
 			out_im = out_re ;
 			out_re = temp ;
 
+			fftwf_destroy_plan (p) ;
+
 			if( IsShift )
-			{
 				shift1d( DimX, out_re, out_im, out_re, out_im ) ;
-			}
 
 			for( int i = 0 ; i < DimX ; i++ )
 			{
@@ -708,8 +667,6 @@ void fft1d( int DimX, bool IsForward, bool IsShift,
 			}
 		}
 		else
-		{
 			throw FFTW3Error( 0 ) ;		
-		}
 	}
 }

@@ -29,8 +29,8 @@
 
 //#include <cmath>
 #include <GL/glut.h>
-#include "deconv/CCube.h"
-#include "deconv/FFTW3fft.h"
+#include "libdeconv/CCube.h"
+#include "libdeconv/FFTW3fft.h"
 #include "ViewerUtils.h"
 #include "gnuplot_i.h"
 
@@ -45,9 +45,9 @@ static int       MainWindowID = 0 ;
 static int       texImageX = 0 ;
 static int       texImageY = 0 ;
 static int       texImageZ = 0 ;
-static ByteArray texImageXY ;
-static ByteArray texImageXZ ;
-static ByteArray texImageYZ ;
+static unsigned char* texImageXY ;
+static unsigned char* texImageXZ ;
+static unsigned char* texImageYZ ;
 static GLuint    texName[3] ;
 
 static gnuplot_ctrl * PlotWindow ;
@@ -108,12 +108,13 @@ void gnu_plot_data( double * data, int ndata, char * title )
 		else throw ErrnoError( filename ) ;
 	}
 		
-	DoubleArray index( new double[ndata] ) ;
+	double* index =  new double[ndata] ;
   	for ( int i = 0 ; i < ndata ; i++ ) index[i] = (double) i ;
 
 	if( plot_refresh_on ) gnuplot_resetplot( PlotWindow ) ;
   	gnuplot_setstyle( PlotWindow, "lines" ) ;
-  	gnuplot_plot_xy( PlotWindow, index.get(), data, ndata, title ) ;
+  	gnuplot_plot_xy( PlotWindow, index, data, ndata, title ) ;
+	delete [] index ;
 }
 
 
@@ -190,12 +191,12 @@ void write_frame()
 {
   	int       width  = glutGet( GLUT_WINDOW_WIDTH );
   	int       height = glutGet( GLUT_WINDOW_HEIGHT );  	
-  	ByteArray pixels( new unsigned char [ width * height * 3 ] ) ;
+  	unsigned char* pixels = new unsigned char [ width * height * 3 ] ;
 
   	glReadBuffer( GL_BACK ) ;
-  	glReadPixels( 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels.get() ) ;
+  	glReadPixels( 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels ) ;
 
-  	write_my_byte_ppm( cube_head, width, height, pixels.get() ) ;
+  	write_my_byte_ppm( cube_head, width, height, pixels) ;
 }
 
 
@@ -361,12 +362,9 @@ void initDisplay( void )
 	while ( IsNotPowerOf2 ( texImageX ) ) texImageX++ ;
 	while ( IsNotPowerOf2 ( texImageY ) ) texImageY++ ;
 	while ( IsNotPowerOf2 ( texImageZ ) ) texImageZ++ ;
-	ByteArray temp1( new unsigned char [ texImageX*texImageY*3 ] ) ;
-	texImageXY = temp1 ;
-	ByteArray temp2( new unsigned char [ texImageX*texImageZ*3 ] ) ;
-	texImageXZ = temp2 ;
-	ByteArray temp3( new unsigned char [ texImageY*texImageZ*3 ] ) ;
-	texImageYZ = temp3 ;
+	texImageXY =  new unsigned char [ texImageX*texImageY*3 ] ;
+	texImageXZ = new unsigned char [ texImageX*texImageZ*3 ]  ;
+	texImageYZ = new unsigned char [ texImageY*texImageZ*3 ];
 	
 	IntensityCenter = ( cube.cubemaxval() + cube.cubeminval() ) / 2.0 ;
 	IntensityWindow = cube.cubemaxval() - cube.cubeminval() ;
@@ -402,7 +400,7 @@ void initDisplay( void )
 
 
 
-void createTexture( ByteArray texImage, int tex_width, int tex_height, int shift_width, int shift_height, int num )
+void createTexture( unsigned char* texImage, int tex_width, int tex_height, int shift_width, int shift_height, int num )
 {
 	int           k ;
 	unsigned char texdata ;
@@ -424,7 +422,7 @@ void createTexture( ByteArray texImage, int tex_width, int tex_height, int shift
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT ) ;
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST ) ;
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST ) ;
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, tex_width, tex_height, 0, GL_RGB, GL_UNSIGNED_BYTE, texImage.get() ) ;
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, tex_width, tex_height, 0, GL_RGB, GL_UNSIGNED_BYTE, texImage ) ;
 }
 
 
@@ -878,7 +876,7 @@ void plotMenuFunc( int choice )
 	int         remove_peak = 0 ;
 	double      maxdata = 0.0, sumdata = 0.0 ; 
 	char        title[256] ;
-	DoubleArray data ;
+	double*     data = NULL ;
 	std::string s ;
 
 	switch( choice ) 
@@ -886,8 +884,7 @@ void plotMenuFunc( int choice )
 		case 1: 
 		{
 			ndata = 256 ;			
-			DoubleArray temp1( new double[ ndata ] ) ;
-			data = temp1 ;
+			data = new double[ ndata ]  ;
 			for( int i = 0 ; i < ndata ; i++ ) data[i] = 0.0 ;
 			if( XYviewON && XZviewON && YZviewON )
 			{
@@ -932,15 +929,14 @@ void plotMenuFunc( int choice )
 			std::cout << " Indicate whether removing(1) the peak or not(0) to plot data <<<< " ;
 			std::cin  >> remove_peak ;
 			if( remove_peak ) data[ maxindex ] = 0.0 ;
-			gnu_plot_data( data.get(), ndata, title ) ;
+			gnu_plot_data( data, ndata, title ) ;
 			break ;
 		}
     			
 		case 2: 
 		{
 			ndata = 65536 ; 			
-			DoubleArray temp2( new double[ ndata ] ) ;
-			data = temp2 ;
+			data = new double[ ndata ] ;
 			for( int i = 0 ; i < ndata ; i++ ) data[i] = 0.0 ;
 			if( XYviewON && XZviewON && YZviewON )
 			{
@@ -985,7 +981,7 @@ void plotMenuFunc( int choice )
 			std::cout << " Indicate whether removing(1) the peak or not(0) to plot data <<<< " ;
 			std::cin  >> remove_peak ;
 			if( remove_peak ) data[ maxindex ] = 0.0 ;
-			gnu_plot_data( data.get(), ndata, title ) ;
+			gnu_plot_data( data, ndata, title ) ;
 			break ;
 		}
 
@@ -1012,8 +1008,7 @@ void plotMenuFunc( int choice )
 				s = std::string( " Focus along X found at SliceYZ " ) ;
 				sprintf( title, "FocusCurve_%s_alongX", cube_head ) ;
 			}  
-			DoubleArray temp3( new double[ ndata ] ) ;
-			data = temp3 ;
+			data = new double[ ndata ] ;
 			for( int k = 0 ; k < ndata ; k++ ) 
 			{
 				data[k] = 0.0 ;
@@ -1033,7 +1028,7 @@ void plotMenuFunc( int choice )
 				}
 			}
 			std::cout << s << maxindex << " : " << maxdata << "\n" ;
-			gnu_plot_data( data.get(), ndata, title ) ;
+			gnu_plot_data( data, ndata, title ) ;
 			break;
 		}
     			
@@ -1060,8 +1055,7 @@ void plotMenuFunc( int choice )
 				s = std::string( " Maximum slice-mean along X found at SliceYZ " ) ;  
 				sprintf( title, "MeanCurve_%s_alongX", cube_head ) ;
 			}   
-			DoubleArray temp4( new double[ ndata ] ) ;
-			data = temp4 ;   
+			data = new double[ ndata ] ;   
 			for( int i = 0 ; i < ndata ; i++ ) 
 			{
 				cube.getslice( i, slice_plane, slice ) ;
@@ -1073,7 +1067,7 @@ void plotMenuFunc( int choice )
 				}
 			}
 			std::cout << s << maxindex << " : " << maxdata << "\n" ;
-			gnu_plot_data( data.get(), ndata, title ) ;
+			gnu_plot_data( data, ndata, title ) ;
 			break;
 		}
     		
@@ -1100,8 +1094,7 @@ void plotMenuFunc( int choice )
 				s = std::string( " Maximum slice-max along X found at SliceYZ " ) ;  
 				sprintf( title, "MaxCurve_%s_alongX", cube_head ) ;
 			}
-			DoubleArray temp5( new double[ ndata ] ) ;
-			data = temp5 ;	  
+			data = new double[ ndata ]  ;	  
 			for( int i = 0 ; i < ndata ; i++ ) 
 			{
 				cube.getslice( i, slice_plane, slice ) ;
@@ -1113,7 +1106,7 @@ void plotMenuFunc( int choice )
 				}
 			}
 			std::cout << s << maxindex << " : " << maxdata << "\n" ;
-			gnu_plot_data( data.get(), ndata, title ) ;
+			gnu_plot_data( data, ndata, title ) ;
 			break;
 		}
     		
@@ -1136,6 +1129,8 @@ void plotMenuFunc( int choice )
 		default:
 			break ;
 	}
+	if (data)
+		delete [] data ;
 }
 
 
@@ -1279,14 +1274,15 @@ void operateMenuFunc( int choice )
 			{
 				PowerSpectraON = true ;
 				cubecopy = cube ;
-				DoubleArray buf( new double[cube.size()] ) ;
+				double* buf = new double[cube.size()] ;
 				for( int i = 0 ; i < cube.size() ; i++ ) buf[i] = 0.0 ;
 				fft3d( cube.length(), cube.width(), cube.height(), true, true, 
-				       cube.data(), buf.get(), cube.data(), buf.get() ) ;
+				       cube.data(), buf, cube.data(), buf ) ;
 				for( int i = 0 ; i < cube.size() ; i++ ) 
 				{
 					(cube.data())[i] = sqrt( (cube.data())[i] * (cube.data())[i] + buf[i] * buf[i] ) ;
 				}
+				delete [] buf ;
 			}
 			initDisplay() ;
 			makeTexture() ;
@@ -1308,19 +1304,22 @@ void operateMenuFunc( int choice )
                         if( !filter_cube.draw_cylinder( cube.length()/2, cube.width()/2, cube.height()/2,
                                                         rx, ry, hz, (unsigned char) 1 ) )
                         {
-                                DoubleArray buf( new double[ cube.size() ] ) ;
+								double* buf = new double[cube.size()] ;
                                 for( int i = 0 ; i < cube.size() ; i++ ) buf[i] = 0.0 ;
                                 fft3d( cube.length(), cube.width(), cube.height(), true, true,
-                                       cube.data(), buf.get(), cube.data(), buf.get() ) ;
+                                       cube.data(), buf, cube.data(), buf ) ;
                                 for( int i = 0 ; i < cube.size() ; i++ )
                                 {
                                         (cube.data())[i] *= (double) (filter_cube.data())[i] ;
                                         buf[i] *= (double) (filter_cube.data())[i] ;
                                 }
                                 fft3d( cube.length(), cube.width(), cube.height(), false, true,
-                                       cube.data(), buf.get(), cube.data(), buf.get() ) ;
+                                       cube.data(), buf, cube.data(), buf ) ;
                                 for( int i = 0 ; i < cube.size(); i++ )
-                                        if( (cube.data())[i] < 0 ) (cube.data())[i] = 0.0 ;
+                                	if( (cube.data())[i] < 0 ) 
+										(cube.data())[i] = 0.0 ;
+
+								delete [] buf ;
                         }
                         initDisplay() ;
                         makeTexture() ;

@@ -20,8 +20,8 @@
  
 
 #include <stdlib.h>
-#include "deconv/FluoRZPSF.h"
-#include "deconv/CCube.h"
+#include "libdeconv/FluoRZPSF.h"
+#include "libdeconv/CCube.h"
 
 
 /*

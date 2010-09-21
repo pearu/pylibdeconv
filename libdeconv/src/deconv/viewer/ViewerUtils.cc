@@ -21,8 +21,7 @@
 
 #include <math.h>
 #include <stdio.h>
-#include "deconv/MYdef.h"
-#include "deconv/MYerror.h"
+#include "libdeconv/MYerror.h"
 #include "ViewerUtils.h"
 
 

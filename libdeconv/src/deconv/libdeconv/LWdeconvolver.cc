@@ -22,9 +22,22 @@
 #include <math.h>
 #include "LWdeconvolver.h"
 
-
 /* public functions */
+
+LWdeconvolver::LWdeconvolver()
+{
+	init() ; 
+}
 	
+LWdeconvolver::~LWdeconvolver()
+{
+	if (_FFTplanf)
+		delete _FFTplanf ;
+		
+	if (_FFTplanb)
+		delete _FFTplanb ;
+}
+
 void LWdeconvolver::init( bool IsApplyNorm, bool IsTrackLike, bool IsTrackMax, bool IsCheckStatus )
 {
 	_setControlFlags( IsCheckStatus, IsApplyNorm, IsTrackMax, IsTrackLike ) ;
@@ -45,8 +58,6 @@ void LWdeconvolver::init( bool IsApplyNorm, bool IsTrackLike, bool IsTrackMax, b
 	_Space = 0 ;
 }
 
-
-
 void LWdeconvolver::exportLW( const char * filename )
 {
 	FILE * fp = fopen( filename, "a+" ) ;
@@ -60,8 +71,6 @@ void LWdeconvolver::exportLW( const char * filename )
 		throw ErrnoError( std::string(filename) ) ;
 	}
 }
-
-
 
 void LWdeconvolver::run( int DimX, int DimY, int DimZ, double * object_re, double * object_im, double * object, 
                          LWdws & ws, unsigned char * SpacialSupport, unsigned char * FrequencySupport )
@@ -139,8 +148,6 @@ void LWdeconvolver::run( int DimX, int DimY, int DimZ, double * object_re, doubl
 	/* end deconvolution */
 	_LWfinishRun( ws ) ;	
 }
-
-
 
 void LWdeconvolver::run( int DimX, int DimY, int DimZ, float * object_re, float * object_im, float * object, 
                          LWsws & ws, unsigned char * SpacialSupport, unsigned char * FrequencySupport )
@@ -220,8 +227,6 @@ void LWdeconvolver::run( int DimX, int DimY, int DimZ, float * object_re, float 
 	_LWfinishRun( ws ) ;	
 }
 
-
-
 /* private functions */
 
 void LWdeconvolver::_LWprintStatus( int stage )
@@ -298,8 +303,6 @@ void LWdeconvolver::_LWprintStatus( int stage )
 	}
 }
 
-
-
 void LWdeconvolver::_LWstartRun( int DimX, int DimY, int DimZ, LWdws & ws )
 {
 	_setDimensions( DimX, DimY, DimZ ) ;
@@ -314,11 +317,8 @@ void LWdeconvolver::_LWstartRun( int DimX, int DimY, int DimZ, LWdws & ws )
 	time( &_t0 ) ;
 	std::cout << " LWdeconvolver::run starts creating FFT plans ... \n" ;
 
-	FFTW3_FFT::Ptr tempf( new FFTW3_FFT( _DimX, _DimY, _DimZ, true,  true, 1 ) ) ;
-	_FFTplanf = tempf ; 
-	
-	FFTW3_FFT::Ptr tempb( new FFTW3_FFT( _DimX, _DimY, _DimZ, false, true, 2 ) ) ;
-	_FFTplanb = tempb ; 
+	_FFTplanf = new FFTW3_FFT (_DimX, _DimY, _DimZ, true,  true, 1) ; 	
+	_FFTplanb = new FFTW3_FFT (_DimX, _DimY, _DimZ, false, true, 2); 
 
 	time( &_t1 ) ;
 	std::cout << " LWdeconvolver::run completes creating FFT plans, elapsed "
@@ -332,6 +332,7 @@ void LWdeconvolver::_LWstartRun( int DimX, int DimY, int DimZ, LWdws & ws )
 	ws.image_re = new double[ ws.size ] ;
 	ws.image_im = new double[ ws.size ] ;
 	ws.otf      = new double[ ws.size ] ;
+	
 	if( _ConditioningIteration > 0 )
 	{
 		ws.object0 = new double[ _Space ] ;
@@ -345,8 +346,6 @@ void LWdeconvolver::_LWstartRun( int DimX, int DimY, int DimZ, LWdws & ws )
 
 	std::cout << " LWdeconvolver::run are using " << (memory/1024.0/128.0) << " Mbytes memory.\n" ;
 }
-
-
 
 void LWdeconvolver::_LWstartRun( int DimX, int DimY, int DimZ, LWsws & ws )
 {
@@ -362,11 +361,9 @@ void LWdeconvolver::_LWstartRun( int DimX, int DimY, int DimZ, LWsws & ws )
 	time( &_t0 ) ;
 	std::cout << " LWdeconvolver::run starts creating FFT plans ... \n" ;
 
-	FFTW3_FFT::Ptr tempf( new FFTW3_FFT( _DimX, _DimY, _DimZ, true,  false, 1 ) ) ;
-	_FFTplanf = tempf ; 
+	_FFTplanf = new FFTW3_FFT (_DimX, _DimY, _DimZ, true,  false, 1 ); 
 	
-	FFTW3_FFT::Ptr tempb( new FFTW3_FFT( _DimX, _DimY, _DimZ, false, false, 2 ) ) ;
-	_FFTplanb = tempb ; 
+	_FFTplanb = new FFTW3_FFT (_DimX, _DimY, _DimZ, false, false, 2) ; 
 		
 	time( &_t1 ) ;
 	std::cout << " LWdeconvolver::run completes creating FFT plans, elapsed "
@@ -394,8 +391,6 @@ void LWdeconvolver::_LWstartRun( int DimX, int DimY, int DimZ, LWsws & ws )
 	std::cout << " LWdeconvolver::run are using " << (memory/1024.0/256.0) << " Mbytes memory.\n" ;   	
 }
 
-
-
 void LWdeconvolver::_LWfinishRun( LWdws & ws )
 {
 	if( ws.psf_re   != NULL ) delete [] ws.psf_re ;
@@ -408,8 +403,6 @@ void LWdeconvolver::_LWfinishRun( LWdws & ws )
 	std::cout << " LWdeconvolution finish running at " << ctime( &_StopRunTime ) ;
 }  
 
-
-
 void LWdeconvolver::_LWfinishRun( LWsws & ws )
 {
 	if( ws.psf_re   != NULL ) delete [] ws.psf_re ;
@@ -421,8 +414,6 @@ void LWdeconvolver::_LWfinishRun( LWsws & ws )
 	time( &_StopRunTime ) ;
 	std::cout << " LWdeconvolution finish running at " << ctime( &_StopRunTime ) ;
 }
-
-
 
 void LWdeconvolver::_LWupdate1( double * object_re, double * object_im, LWdws & ws  )
 {

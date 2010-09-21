@@ -47,8 +47,6 @@ if os_name == 'Darwin':
 		/usr/include
 		/usr/X11/include
 		/usr/local/include
-		/usr/include/boost
-		/usr/include/boost/filesystem
 		..
 		""" )
 	lib_dirs	 = Split( """
@@ -60,9 +58,7 @@ elif os_name == 'Linux':
 	include_dirs = Split( """
 		/usr/local/include
 		/usr/local/include/cas
-		/usr/include/boost
-		/usr/include/boost/filesystem
-		#build/libdeconv
+		#build
 		""" )
 	lib_dirs = Split( """
 		/usr/local/lib
@@ -90,7 +86,7 @@ if env['debug']:
 else:
 	env.Prepend(
         	CCFLAGS = [ '-O3' ],
-        	LINKFLAGS = [ '-O3' ],
+        	LINKFLAGS = [  ],
 	)
 
 Export( 'env' )

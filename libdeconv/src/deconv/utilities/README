@@ -57,7 +57,7 @@ Tips : If you cat a CCube header file (.hdr), you will see the dimensions of the
        <the middle          dimension>
        <the fastest varying dimension>
  
-You can package your 2-D images to CCube files using ViewSlices (read how to use ViewSlices in "viewer/README").
+You can package you 2-D images to CCube files using ViewSlices (read how to use ViewSlices in "viewer/README").
 You can output 2-D images from CCube files using ViewCube (read how to use ViewCube in "viewer/README"). 
 
 

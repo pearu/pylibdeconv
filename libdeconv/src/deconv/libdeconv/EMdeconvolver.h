@@ -153,21 +153,12 @@ typedef struct
 	float * buf ;
 	float * eimg ;
 } EMsws ;
-
                
 class EMdeconvolver : public deconvolver
 {
-	public:
-	typedef boost::shared_ptr< EMdeconvolver > Ptr ;
-	
-	virtual ~EMdeconvolver() {}
-	
-	
-	/*
-	 *	Constructor
-	 */
-	EMdeconvolver() { init() ; }	
-	
+ public:	
+	virtual ~EMdeconvolver() ;
+	EMdeconvolver() ;
 	
 	/*
 	 *	Get private members
@@ -252,8 +243,8 @@ class EMdeconvolver : public deconvolver
 	bool            _Accelerate ;
 	unsigned int    _EMIRiteration ;
 	double          _EMIRpenalty ;	
-	FFTW3_FFT::Ptr  _FFTplanf ;
-	FFTW3_FFT::Ptr  _FFTplanb ;
+	FFTW3_FFT*  	_FFTplanf ;
+	FFTW3_FFT*  	_FFTplanb ;
         
 	void    _EMprintStatus( int stage ) ; 
                

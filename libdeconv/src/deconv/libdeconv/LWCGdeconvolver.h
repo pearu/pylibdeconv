@@ -101,8 +101,8 @@ class ConditioningToleranceError : public Error
 class LWCGdeconvolver : public deconvolver
 {
 	public:	
-	virtual         ~LWCGdeconvolver() {}
-	
+		virtual ~LWCGdeconvolver() {}
+		LWCGdeconvolver() {}
 	
 	/*
 	 *	Get protected members
@@ -149,8 +149,8 @@ class LWCGdeconvolver : public deconvolver
 	unsigned int    _ConditioningIteration ;
 	double          _ConditioningValue ;
 	double          _ConditioningTolerance ;	
-	FFTW3_FFT::Ptr  _FFTplanf ;
-	FFTW3_FFT::Ptr  _FFTplanb ;
+	FFTW3_FFT*  	_FFTplanf ;
+	FFTW3_FFT*  	_FFTplanb ;
 	
 	void   	_printConditioning( double cv, double likelihood ) ;
 	
